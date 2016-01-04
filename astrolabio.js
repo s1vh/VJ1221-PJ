@@ -140,6 +140,12 @@ function initShaders() {
   program.vertexNormalAttribute = gl.getAttribLocation ( program, "VertexNormal");
   program.normalMatrixIndex     = gl.getUniformLocation( program, "normalMatrix");
   gl.enableVertexAttribArray(program.vertexNormalAttribute);
+  
+  // coordenadas de textura
+  program.vertexTexcoordsAttribute = gl.getAttribLocation ( program, "VertexTexcoords");
+  gl.enableVertexAttribArray(program.vertexTexcoordsAttribute);
+  program.repetition               = gl.getUniformLocation( program, "repetition");
+  gl.uniform1f(program.repetition, 1.0);
 
   // material
   program.KaIndex               = gl.getUniformLocation( program, "Material.Ka");
@@ -155,25 +161,25 @@ function initShaders() {
   
 }
 
-function initRendering() { 
-
+function initRendering() {
+  
   gl.clearColor(0.15,0.15,0.15,1.0);
   gl.enable(gl.DEPTH_TEST);
   
   setShaderLight();
-
+  
 }
 
 function initBuffers(model) {
-    
+  
   model.idBufferVertices = gl.createBuffer ();
   gl.bindBuffer (gl.ARRAY_BUFFER, model.idBufferVertices);
   gl.bufferData (gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
-    
+  
   model.idBufferIndices = gl.createBuffer ();
   gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, model.idBufferIndices);
   gl.bufferData (gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(model.indices), gl.STATIC_DRAW);
-
+  
 }
 
 function initPrimitives() {
@@ -265,15 +271,16 @@ function setShaderLight() {	// this must be modified to allow current colors to 
   
 }
 
-function drawSolid(model) { 
-    
+function drawSolid(model) {
+  
   gl.bindBuffer (gl.ARRAY_BUFFER, model.idBufferVertices);
-  gl.vertexAttribPointer (program.vertexPositionAttribute, 3, gl.FLOAT, false, 2*3*4,   0);
-  gl.vertexAttribPointer (program.vertexNormalAttribute,   3, gl.FLOAT, false, 2*3*4, 3*4);
-    
+  gl.vertexAttribPointer (program.vertexPositionAttribute,  3, gl.FLOAT, false, 8*4,   0);
+  gl.vertexAttribPointer (program.vertexNormalAttribute,    3, gl.FLOAT, false, 8*4, 3*4);
+  gl.vertexAttribPointer (program.vertexTexcoordsAttribute, 2, gl.FLOAT, false, 8*4, 6*4);
+  
   gl.bindBuffer   (gl.ELEMENT_ARRAY_BUFFER, model.idBufferIndices);
   gl.drawElements (gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
-
+  
 }
 
 function drawScene() {
