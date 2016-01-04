@@ -102,13 +102,18 @@ function initShaders() {
   var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
   
   switch (shadingMode)	{
-	
+	  
 	case 0:
+		gl.shaderSource(vertexShader, document.getElementById("SkyBoxVtxShader").text);
+		gl.shaderSource(fragmentShader, document.getElementById("SkyBoxFrgShader").text);
+		break;
+	
+	case 1:
 		gl.shaderSource(vertexShader, document.getElementById("GouraudVertexShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("GouraudFragmentShader").text);
 		break;
 		
-	case 1:
+	case 2:
 		gl.shaderSource(vertexShader, document.getElementById("PhongVertexShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("PhongFragmentShader").text);
 		break;
@@ -275,9 +280,12 @@ function drawScene() {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    //	ORBITS
+    //	OBJECT
+	var skybox = false;
+	
 	var modelMatrix     = mat4.create();
 	
+	//	ORBITS
 	for (var i = 1; i <= orbs; i++)  {
 
       orbitTorus = makeTorus(0.02*i, 0.8*i, 6, 48);
@@ -303,10 +311,13 @@ function drawScene() {
 	  mat4.copy(modelMatrix, rotationMatrix);
 	  
 	  if ((orbs-i)%2 == 0)	{
+		  
 		  mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-90));	// --odds--
-	  }
-	  else{
+		  
+	  }	else	{
+		  
 		  mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));	// --pairs-
+		  
 	  }
 	  mat4.translate(modelMatrix, modelMatrix, [i*0.4*2/orbs, 0, 0]);
 	  mat4.scale(modelMatrix, modelMatrix, [1/orbs/3, 1/orbs/3, 1/orbs/3]);
@@ -356,22 +367,27 @@ function initHandlers() {
 
 	canvas.addEventListener("mousemove",
 		function (event) {
-		if (!mouseDown) {
-			return;
-		}
+			
+			if (!mouseDown) {
+				return;
+			}
 		var newX = event.clientX;
 		var newY = event.clientY;
 		
 		if (event.shiftKey == 1) {
+			
 			if (event.altKey == 1) {
+				
 				// fovy
 				fovy -= (newY - lastMouseY) / 100.0;
+				
 				if (fovy < 0.001) {
 					fovy = 0.1;
 				}
 			} else {
 				// radius
 				radius -= (newY - lastMouseY) / 10.0;
+				
 				if (radius < 0.01) {
 					radius = 0.01;
 				}
@@ -380,6 +396,7 @@ function initHandlers() {
 			// position
 			myphi -= (newX - lastMouseX);
 			zeta  += (newY - lastMouseY);
+			
 			if (zeta < -80) {
 				zeta = -80.0;
 			}
@@ -403,7 +420,7 @@ function initHandlers() {
 				// 	select shader (it will be erased on release)
 				case  67:																	// iterates through shaders
 					shadingMode++;
-					if(shadingMode > 1) {shadingMode = 0};
+					if(shadingMode > 2) {shadingMode = 0};
 				
 					gl = getWebGLContext();
 					initShaders();
