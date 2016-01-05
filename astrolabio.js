@@ -9,7 +9,8 @@ var  b = 0;   // pair orbit angle increment
 var aa = 0;   // odd orbit angle
 var bb = 0;   // pair orbit angle
 
-var myphi = 0, zeta = 0, radius = 5, fovy = Math.PI/5;
+var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
+//var myphi = 0, zeta = 0, radius = 2, fovy = 1;
 
 var mat 		= Chrome;
 var	skyMap		= 0;
@@ -396,9 +397,8 @@ function drawScene() {
 	var modelMatrix     = mat4.create();
 	
 	mat4.identity(modelMatrix);
-	mat4.scale(modelMatrix, modelMatrix, [1, 1, 1]);
+	mat4.scale(modelMatrix, modelMatrix, [100, 100, 100]);
 	drawInPerspective(modelMatrix, exampleCube, mat);
-	
 
     //	OBJECT
 	var skybox = false;
