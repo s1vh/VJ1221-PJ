@@ -11,8 +11,12 @@ var bb = 0;   // pair orbit angle
 
 var myphi = 0, zeta = 0, radius = 5, fovy = Math.PI/5;
 
-var mat = Brass;
-var shadingMode	= 0;
+var mat 		= Chrome;
+var	skyMap		= 0;
+var shadingMode	= 1;
+
+var image = new Image();
+image.src = "maps/night_right.png";
 
 //  Gets Radians from a given angle in degrees
 Math.getRadians = function(degrees) {
@@ -96,24 +100,29 @@ function getWebGLContext() {
 
 }
 
-function initShaders() { 
+function initShaders()	{ 
     
   var vertexShader = gl.createShader(gl.VERTEX_SHADER);
   var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
   
-  switch (shadingMode)	{
+  switch(shadingMode)	{
 	  
 	case 0:
 		gl.shaderSource(vertexShader, document.getElementById("SkyBoxVtxShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("SkyBoxFrgShader").text);
 		break;
-	
+		
 	case 1:
+		gl.shaderSource(vertexShader, document.getElementById("textVtxShader").text);
+		gl.shaderSource(fragmentShader, document.getElementById("textFrgShader").text);
+		break;
+		
+	case 2:
 		gl.shaderSource(vertexShader, document.getElementById("GouraudVertexShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("GouraudFragmentShader").text);
 		break;
 		
-	case 2:
+	case 3:
 		gl.shaderSource(vertexShader, document.getElementById("PhongVertexShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("PhongFragmentShader").text);
 		break;
@@ -161,7 +170,7 @@ function initShaders() {
   
 }
 
-function initRendering() {
+function initRendering()	{
   
   gl.clearColor(0.15,0.15,0.15,1.0);
   gl.enable(gl.DEPTH_TEST);
@@ -170,7 +179,7 @@ function initRendering() {
   
 }
 
-function initBuffers(model) {
+function initBuffers(model)	{
   
   model.idBufferVertices = gl.createBuffer ();
   gl.bindBuffer (gl.ARRAY_BUFFER, model.idBufferVertices);
@@ -182,10 +191,10 @@ function initBuffers(model) {
   
 }
 
-function initPrimitives() {
+function initPrimitives()	{
 
   //initBuffers(examplePlane);
-  //initBuffers(exampleCube);
+  initBuffers(exampleCube);
   //initBuffers(exampleCone);
   initBuffers(exampleCylinder);
   initBuffers(exampleSphere);
@@ -196,25 +205,25 @@ function initPrimitives() {
 }
 
 
-function setShaderProjectionMatrix(projectionMatrix) {
+function setShaderProjectionMatrix(projectionMatrix)	{
   
   gl.uniformMatrix4fv(program.projectionMatrixIndex, false, projectionMatrix);
   
 }
 
-function setShaderModelViewMatrix(modelViewMatrix) {
+function setShaderModelViewMatrix(modelViewMatrix)	{
   
   gl.uniformMatrix4fv(program.modelViewMatrixIndex, false, modelViewMatrix);
   
 }
 
-function setShaderNormalMatrix(normalMatrix) {
+function setShaderNormalMatrix(normalMatrix)	{
   
   gl.uniformMatrix3fv(program.normalMatrixIndex, false, normalMatrix);
   
 }
 
-function getNormalMatrix(modelViewMatrix) {
+function getNormalMatrix(modelViewMatrix)	{
   
   var normalMatrix = mat3.create();
   
@@ -226,7 +235,7 @@ function getNormalMatrix(modelViewMatrix) {
   
 }
 
-function getProjectionMatrix() {
+function getProjectionMatrix()	{
   
   var projectionMatrix  = mat4.create();
   
@@ -236,7 +245,7 @@ function getProjectionMatrix() {
   
 }
 
-function getCameraMatrix() {
+function getCameraMatrix()	{
   
   var _phi  = myphi* Math.PI / 180.0;
   var _zeta = zeta * Math.PI / 180.0;
@@ -253,7 +262,7 @@ function getCameraMatrix() {
   
 }
 
-function setShaderMaterial(material) {
+function setShaderMaterial(material)	{
 
   gl.uniform3fv(program.KaIndex,    material.mat_ambient);
   gl.uniform3fv(program.KdIndex,    material.mat_diffuse);
@@ -262,7 +271,7 @@ function setShaderMaterial(material) {
   
 }
 
-function setShaderLight() {	// this must be modified to allow current colors to be saved after changing shaders
+function setShaderLight()	{	// this must be modified to allow current colors to be saved after changing shaders
 
   gl.uniform3f(program.LaIndex,       1.0,1.0,1.0);
   gl.uniform3f(program.LdIndex,       1.0,1.0,1.0);
@@ -271,7 +280,7 @@ function setShaderLight() {	// this must be modified to allow current colors to 
   
 }
 
-function drawSolid(model) {
+function drawSolid(model)	{
   
   gl.bindBuffer (gl.ARRAY_BUFFER, model.idBufferVertices);
   gl.vertexAttribPointer (program.vertexPositionAttribute,  3, gl.FLOAT, false, 8*4,   0);
@@ -283,14 +292,118 @@ function drawSolid(model) {
   
 }
 
+// CARGA TEXTURA
+function setTexture (image)	{
+  
+  // creación de la textura
+  var texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  
+  // la hacemos de tamaño potencia de dos
+  //if (!isPowerOfTwo(image.width) || !isPowerOfTwo(image.height)) {
+    
+    // Scale up the texture to the next highest power of two dimensions.
+    //var canvas    = document.createElement("canvas");
+    //canvas.width  = nextHighestPowerOfTwo(image.width);
+    //canvas.height = nextHighestPowerOfTwo(image.height);
+    
+    //var ctx       = canvas.getContext("2d");
+    //ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    //image = canvas;
+  
+  //}
+  
+  // datos de la textura
+  gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+  
+  // parámetros de filtrado
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  
+  // parámetros de repetición (ccordenadas de textura mayores a uno)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+  
+  // creación del mipmap
+  gl.generateMipmap(gl.TEXTURE_2D);
+
+  // se activa la unidad cero y se le asigna el objeto textura
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // se obtiene la referencia a la variable de tipo sampler2D en el shader
+  program.textureIndex = gl.getUniformLocation(program, 'myTexture');
+  
+  // se asocia la variable de tipo sampler2D a una unidad de textura
+  gl.uniform1i(program.textureIndex, 0);
+
+}
+
+
+
+function loadCubeMap()	{
+	
+	var texture = gl.createTexture();
+	
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture  (gl.TEXTURE_CUBE_MAP, texture);
+	
+	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	
+	switch(skyMap)	{
+		
+		case 0:
+			var faces = [["night_right.png", gl.TEXTURE_CUBE_MAP_POSITIVE_X],
+						 ["night_left.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_X],
+						 ["night_top.png", gl.TEXTURE_CUBE_MAP_POSITIVE_Y],
+						 ["night_bottom.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_Y],
+						 ["night_front.png", gl.TEXTURE_CUBE_MAP_POSITIVE_Z],
+						 ["night_back.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_Z]]
+						 ;
+			break;
+	}
+	
+	for (var i = 0; i < faces.length; i++)	{
+		
+		var face = faces[i][1];
+		var image = new Image();
+		
+		image.onload = function(texture, face, image)	{
+			return function()	{
+				gl.texImage2D(face, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+			}
+		}	(texture, face, image);
+		
+		image.src = faces[i][0];
+	}
+	
+	program.textureIndex = gl.getUniformLocation(program, 'myTexture');
+	gl.uniform1i(program.textureIndex, 0);
+	
+}
+
 function drawScene() {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	
+	//	SKY	
+	var skybox = true;
+	
+	var modelMatrix     = mat4.create();
+	
+	mat4.identity(modelMatrix);
+	mat4.scale(modelMatrix, modelMatrix, [1, 1, 1]);
+	drawInPerspective(modelMatrix, exampleCube, mat);
+	
 
     //	OBJECT
 	var skybox = false;
 	
-	var modelMatrix     = mat4.create();
+	mat4.identity(modelMatrix);
 	
 	//	ORBITS
 	for (var i = 1; i <= orbs; i++)  {
@@ -427,7 +540,7 @@ function initHandlers() {
 				// 	select shader (it will be erased on release)
 				case  67:																	// iterates through shaders
 					shadingMode++;
-					if(shadingMode > 2) {shadingMode = 0};
+					if(shadingMode > 3) {shadingMode = 0};
 				
 					gl = getWebGLContext();
 					initShaders();
@@ -462,21 +575,21 @@ function initHandlers() {
 
 }        
 
-function setColor (index, value) {
+//function setColor (index, value) {
 
-  var myColor = value.substr(1); // para eliminar el # del #FCA34D
+  //var myColor = value.substr(1); // para eliminar el # del #FCA34D
       
-  var r = myColor.charAt(0) + '' + myColor.charAt(1);
-  var g = myColor.charAt(2) + '' + myColor.charAt(3);
-  var b = myColor.charAt(4) + '' + myColor.charAt(5);
+  //var r = myColor.charAt(0) + '' + myColor.charAt(1);
+  //var g = myColor.charAt(2) + '' + myColor.charAt(3);
+  //var b = myColor.charAt(4) + '' + myColor.charAt(5);
 
-  r = parseInt(r, 16) / 255.0;
-  g = parseInt(g, 16) / 255.0;
-  b = parseInt(b, 16) / 255.0;
+  //r = parseInt(r, 16) / 255.0;
+  //g = parseInt(g, 16) / 255.0;
+  //b = parseInt(b, 16) / 255.0;
   
-  gl.uniform3f(index, r, g, b);
+  //gl.uniform3f(index, r, g, b);
   
-}
+//}
 
 function initWebGL() {
     
@@ -486,9 +599,11 @@ function initWebGL() {
     alert("WebGL no está disponible");
     return;
   }
-    
+
   initShaders();
   initPrimitives();
+  //loadCubeMap();
+  setTexture(image);
   initRendering();
   initHandlers();
   
