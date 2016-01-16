@@ -194,9 +194,6 @@ function initBuffers(model)	{
 
 function initPrimitives()	{
 
-  //initBuffers(examplePlane);
-  //initBuffers(exampleCube);
-  //initBuffers(exampleCone);
   initBuffers(exampleCylinder);
   initBuffers(exampleSphere);
 
@@ -299,21 +296,9 @@ function setTexture (image)	{
   // creación de la textura
   var texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
   
-  // la hacemos de tamaño potencia de dos
-  //if (!isPowerOfTwo(image.width) || !isPowerOfTwo(image.height)) {
-    
-    // Scale up the texture to the next highest power of two dimensions.
-    //var canvas    = document.createElement("canvas");
-    //canvas.width  = nextHighestPowerOfTwo(image.width);
-    //canvas.height = nextHighestPowerOfTwo(image.height);
-    
-    //var ctx       = canvas.getContext("2d");
-    //ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    //image = canvas;
-  
-  //}
+  // (set maps are always power of 2)
   
   // datos de la textura
   gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
@@ -339,52 +324,6 @@ function setTexture (image)	{
   // se asocia la variable de tipo sampler2D a una unidad de textura
   gl.uniform1i(program.textureIndex, 0);
 
-}
-
-
-
-function loadCubeMap()	{
-	
-	var texture = gl.createTexture();
-	
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture  (gl.TEXTURE_CUBE_MAP, texture);
-	
-	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-	
-	switch(skyMap)	{
-		
-		case 0:
-			var faces = [["night_right.png", gl.TEXTURE_CUBE_MAP_POSITIVE_X],
-						 ["night_left.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_X],
-						 ["night_top.png", gl.TEXTURE_CUBE_MAP_POSITIVE_Y],
-						 ["night_bottom.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_Y],
-						 ["night_front.png", gl.TEXTURE_CUBE_MAP_POSITIVE_Z],
-						 ["night_back.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_Z]]
-						 ;
-			break;
-	}
-	
-	for (var i = 0; i < faces.length; i++)	{
-		
-		var face = faces[i][1];
-		var image = new Image();
-		
-		image.onload = function(texture, face, image)	{
-			return function()	{
-				gl.texImage2D(face, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-			}
-		}	(texture, face, image);
-		
-		image.src = faces[i][0];
-	}
-	
-	program.textureIndex = gl.getUniformLocation(program, 'myTexture');
-	gl.uniform1i(program.textureIndex, 0);
-	
 }
 
 function drawScene() {
@@ -460,6 +399,7 @@ function drawScene() {
 			
 		}
       }
+	  
 	}
 	
 }
@@ -473,64 +413,64 @@ function initHandlers() {
 	var canvas = document.getElementById("myCanvas");
 
 	canvas.addEventListener("mousedown",
-		function(event) {
-			mouseDown  = true;
-			lastMouseX = event.clientX;
-			lastMouseY = event.clientY;
-		},
-		false);
+			function(event) {
+				mouseDown  = true;
+				lastMouseX = event.clientX;
+				lastMouseY = event.clientY;
+			},
+			false);
 
 	canvas.addEventListener("mouseup",
-		function() {
-			mouseDown = false;
-		},
-		false);
+			function() {
+				mouseDown = false;
+			},
+			false);
 
 	canvas.addEventListener("mousemove",
-		function (event) {
+			function (event) {
 			
-			if (!mouseDown) {
-				return;
-			}
-		var newX = event.clientX;
-		var newY = event.clientY;
+				if (!mouseDown) {
+					return;
+				}
+			var newX = event.clientX;
+			var newY = event.clientY;
 		
-		if (event.shiftKey == 1) {
+			if (event.shiftKey == 1) {
 			
-			if (event.altKey == 1) {
+				if (event.altKey == 1) {
 				
-				// fovy
-				fovy -= (newY - lastMouseY) / 100.0;
+					// fovy
+					fovy -= (newY - lastMouseY) / 100.0;
 				
-				if (fovy < 0.001) {
-					fovy = 0.1;
+					if (fovy < 0.001) {
+						fovy = 0.1;
+					}
+				} else {
+					// radius
+					radius -= (newY - lastMouseY) / 10.0;
+				
+					if (radius < 0.01) {
+						radius = 0.01;
+					}
 				}
 			} else {
-				// radius
-				radius -= (newY - lastMouseY) / 10.0;
-				
-				if (radius < 0.01) {
-					radius = 0.01;
+				// position
+				myphi -= (newX - lastMouseX);
+				zeta  += (newY - lastMouseY);
+			
+				if (zeta < -80) {
+					zeta = -80.0;
+				}
+				if (zeta > 80) {
+					zeta = 80;
 				}
 			}
-		} else {
-			// position
-			myphi -= (newX - lastMouseX);
-			zeta  += (newY - lastMouseY);
-			
-			if (zeta < -80) {
-				zeta = -80.0;
-			}
-			if (zeta > 80) {
-				zeta = 80;
-			}
-		}
-		lastMouseX = newX
-		lastMouseY = newY;
+			lastMouseX = newX
+			lastMouseY = newY;
 	  
-		requestAnimationFrame(drawScene);
-    },
-    false);
+			requestAnimationFrame(drawScene);
+		},
+		false);
 	
 	// KEYBOARD EVENTS
 	document.addEventListener("keydown",
@@ -576,34 +516,17 @@ function initHandlers() {
 
 }        
 
-//function setColor (index, value) {
-
-  //var myColor = value.substr(1); // para eliminar el # del #FCA34D
-      
-  //var r = myColor.charAt(0) + '' + myColor.charAt(1);
-  //var g = myColor.charAt(2) + '' + myColor.charAt(3);
-  //var b = myColor.charAt(4) + '' + myColor.charAt(5);
-
-  //r = parseInt(r, 16) / 255.0;
-  //g = parseInt(g, 16) / 255.0;
-  //b = parseInt(b, 16) / 255.0;
-  
-  //gl.uniform3f(index, r, g, b);
-  
-//}
-
 function initWebGL() {
     
   gl = getWebGLContext();
     
   if (!gl) {
-    alert("WebGL no está disponible");
-    return;
-  }
+		alert("WebGL no está disponible");
+		return;
+	}
 
   initShaders();
   initPrimitives();
-  //loadCubeMap();
   setTexture(image);
   initRendering();
   initHandlers();
