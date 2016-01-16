@@ -17,7 +17,7 @@ var	skyMap		= 0;
 var shadingMode	= 1;
 
 var image = new Image();
-image.src = "maps/night_right.png";
+image.src = "maps/eve_sky.png";
 
 //  Gets Radians from a given angle in degrees
 Math.getRadians = function(degrees) {
@@ -195,7 +195,7 @@ function initBuffers(model)	{
 function initPrimitives()	{
 
   //initBuffers(examplePlane);
-  initBuffers(exampleCube);
+  //initBuffers(exampleCube);
   //initBuffers(exampleCone);
   initBuffers(exampleCylinder);
   initBuffers(exampleSphere);
@@ -397,8 +397,9 @@ function drawScene() {
 	var modelMatrix     = mat4.create();
 	
 	mat4.identity(modelMatrix);
-	mat4.scale(modelMatrix, modelMatrix, [100, 100, 100]);
-	drawInPerspective(modelMatrix, exampleCube, mat);
+	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
+	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the bright side
+	drawInPerspective(modelMatrix, exampleSphere, mat);
 
     //	OBJECT
 	var skybox = false;
