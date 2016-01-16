@@ -10,10 +10,8 @@ var aa = 0;   // odd orbit angle
 var bb = 0;   // pair orbit angle
 
 var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
-//var myphi = 0, zeta = 0, radius = 2, fovy = 1;
 
 var mat 		= Chrome;
-var	skyMap		= 0;
 var shadingMode	= 1;
 
 var image = new Image();
@@ -90,13 +88,13 @@ function getWebGLContext() {
   var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
     
   for (var i = 0; i < names.length; ++i) {
-    try {
-      return canvas.getContext(names[i]);
-    }
-    catch(e) {
-    }
+		try {
+		return canvas.getContext(names[i]);
+		}
+		catch(e) {
+		}
   }
-    
+  
   return null;
 
 }
@@ -194,6 +192,7 @@ function initBuffers(model)	{
 
 function initPrimitives()	{
 
+  // I only need these three primitives for this build
   initBuffers(exampleCylinder);
   initBuffers(exampleSphere);
 
@@ -338,7 +337,7 @@ function drawScene() {
 	mat4.identity(modelMatrix);
 	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
 	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the bright side
-	drawInPerspective(modelMatrix, exampleSphere, mat);
+	drawInPerspective(modelMatrix, exampleSphere, Background);		// Background is a neutral mat for rendering skies
 
     //	OBJECT
 	var skybox = false;

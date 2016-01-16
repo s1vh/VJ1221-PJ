@@ -201,3 +201,10 @@ var Yellow_rubber = {
   "mat_specular": [ 0.7,0.7,0.04 ],
   "alpha"       : [ 10.0 ]
 };
+
+var Background = {
+  "mat_ambient" : [ 0.5,0.5,0.5 ],
+  "mat_diffuse" : [ 0.5,0.5,0.5 ],
+  "mat_specular": [ 0.5,0.5,0.5 ],
+  "alpha"       : [ 50.0 ]
+};
