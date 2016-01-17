@@ -110,6 +110,8 @@
         uniform   mat4 projectionMatrix;
         uniform   mat4 modelViewMatrix;
         uniform   mat3 normalMatrix;
+		
+		uniform   bool reflection;
         
         attribute vec3 VertexPosition;
         attribute vec3 VertexNormal;
@@ -119,17 +121,27 @@
         varying vec2 texCoords;
         
         void main()  {
-          
-          N  = normalize(normalMatrix * VertexNormal);
-          vec4 ecPosition = modelViewMatrix * vec4(VertexPosition,1.0);
-          ec = vec3(ecPosition);
-          
-          gl_Position = projectionMatrix * ecPosition;
-          texCoords   = VertexTexcoords;
+			
+			N  = normalize(normalMatrix * VertexNormal);
+			vec4 ecPosition = modelViewMatrix * vec4(VertexPosition, 1.0);
+			ec = vec3(ecPosition);
+			
+			gl_Position = projectionMatrix * ecPosition;
+		  
+			if (reflection)	{
+				
+				//texCoords   = VertexTexcoords;
+				//texCoords   = normalize(reflect(-VertexTexcoords, N));
+				
+			} else	{
+				
+				texCoords   = VertexTexcoords;
+				
+			}
           
         }
       
-      </script>
+    </script>
 	
 	<!--SkyBox Vertex Shader-->
 	<script id="SkyBoxVtxShader" type="x-shader/x-vertex">
@@ -279,6 +291,7 @@
           }
         
           return (ambient + diffuse + specular);
+		  
         }
       
         void main() {
@@ -287,8 +300,7 @@
           vec3 L = normalize(Light.Position - ec);
           vec3 V = normalize(-ec);
         
-          //gl_FragColor = mix(texture2D(myTexture, texCoords), vec4(phong(n,L,V),1.0), 0.3);
-          gl_FragColor = texture2D(myTexture, texCoords*repetition) * vec4(phong(n,L,V),1.0) * 1.6;
+          gl_FragColor = texture2D(myTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
         
         }
       

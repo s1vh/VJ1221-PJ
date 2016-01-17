@@ -53,15 +53,8 @@ function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
 }
 
-//  Concatenates model-view and camera matrix and draws given primitive
-function concatenateMtxAndDrawWire(modelViewMatrix, modelMatrix, primitive) {
-  mat4.multiply(modelViewMatrix, getCameraMatrix(), modelMatrix);
-  gl.uniformMatrix4fv(program.modelViewMatrixIndex, false, modelViewMatrix);
-  drawWire(primitive);
-}
-
 //  Puts together matrix to view in perspective and orders drawing
-function drawInPerspective(modelMatrix, primitive, material) {
+function drawModel(modelMatrix, primitive, material) {
 	
 	var modelViewMatrix = mat4.create();
 	mat4.multiply(modelViewMatrix, getCameraMatrix(), modelMatrix);
@@ -74,6 +67,10 @@ function drawInPerspective(modelMatrix, primitive, material) {
 	var projectionMatrix  = mat4.create();
 	projectionMatrix = getProjectionMatrix();
 	setShaderProjectionMatrix(projectionMatrix);
+	
+	var reflection	= false;
+	//reflection		= getReflection();
+	setShaderReflection(reflection);
 	
 	setShaderMaterial(material);
 	
@@ -149,6 +146,8 @@ function initShaders()	{
   program.normalMatrixIndex     = gl.getUniformLocation( program, "normalMatrix");
   gl.enableVertexAttribArray(program.vertexNormalAttribute);
   
+  program.reflectionIndex		= gl.getUniformLocation( program, "reflection");
+  
   // coordenadas de textura
   program.vertexTexcoordsAttribute = gl.getAttribLocation ( program, "VertexTexcoords");
   gl.enableVertexAttribArray(program.vertexTexcoordsAttribute);
@@ -220,6 +219,12 @@ function setShaderNormalMatrix(normalMatrix)	{
   
 }
 
+function setShaderReflection(reflection)	{
+	
+	gl.uniform1i(program.reflectionIndex, false, reflection);
+	
+}
+
 function getNormalMatrix(modelViewMatrix)	{
   
   var normalMatrix = mat3.create();
@@ -241,6 +246,16 @@ function getProjectionMatrix()	{
   return projectionMatrix;
   
 }
+
+//function getReflection()	{
+	
+	//var reflection = false;
+	
+	//reflection = false;
+	
+	//return reflection;
+	
+//}
 
 function getCameraMatrix()	{
   
@@ -330,17 +345,17 @@ function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	//	SKY	
-	var skybox = true;
+	var reflection = false;
 	
 	var modelMatrix     = mat4.create();
 	
 	mat4.identity(modelMatrix);
 	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
 	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the bright side
-	drawInPerspective(modelMatrix, exampleSphere, Background);		// Background is a neutral mat for rendering skies
+	drawModel(modelMatrix, exampleSphere, Background);		// Background is a neutral mat for rendering skies
 
     //	OBJECT
-	var skybox = false;
+	reflection = true;
 	
 	mat4.identity(modelMatrix);
 	
@@ -364,7 +379,7 @@ function drawScene() {
       var rotationMatrix = mat4.clone(modelMatrix);
 
       mat4.scale(modelMatrix, modelMatrix, [1/orbs, 1/orbs, 1/i]); // normalize orbits
-	  drawInPerspective(modelMatrix, orbitTorus, mat);
+	  drawModel(modelMatrix, orbitTorus, mat);
 	  
 	  // ORBS
 	  mat4.copy(modelMatrix, rotationMatrix);
@@ -381,7 +396,7 @@ function drawScene() {
 	  mat4.translate(modelMatrix, modelMatrix, [i*0.4*2/orbs, 0, 0]);
 	  mat4.scale(modelMatrix, modelMatrix, [1/orbs/3, 1/orbs/3, 1/orbs/3]);
 	  
-	  drawInPerspective(modelMatrix, exampleSphere, mat);
+	  drawModel(modelMatrix, exampleSphere, mat);
 	  
 	  // HANDLERS
       for (var j = -1; j < 2; j=j+2)  { // --two handlers for each orbit--
@@ -394,7 +409,7 @@ function drawScene() {
 			mat4.rotateY(modelMatrix, modelMatrix, Math.getRadians(j*90));
 			mat4.scale(modelMatrix, modelMatrix, [0.01, 0.01, 0.4*2/orbs]);
 
-			drawInPerspective(modelMatrix, exampleCylinder, mat);
+			drawModel(modelMatrix, exampleCylinder, mat);
 			
 		}
       }
