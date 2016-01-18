@@ -292,7 +292,7 @@ function setTexture (image)	{
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
   
-  // (set maps are always power of 2)
+  // (set maps are always power of 2 so I don't need to check it)
   
   // datos de la textura
   gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
@@ -325,7 +325,7 @@ function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	//	SKY	
-	gl.uniform1i(program.reflectionIndex, false);	// disables reflection
+	gl.uniform1i(program.reflectionIndex, false);	// disables reflection at the shader
 	
 	var modelMatrix     = mat4.create();
 	
@@ -335,7 +335,7 @@ function drawScene() {
 	drawModel(modelMatrix, exampleSphere, Background);				// Background is a neutral mat for rendering skies
 
     //	OBJECT
-	gl.uniform1i(program.reflectionIndex, true);	// enables reflection
+	gl.uniform1i(program.reflectionIndex, true);	// enables reflection at the shader
 	
 	mat4.identity(modelMatrix);
 	
@@ -343,8 +343,7 @@ function drawScene() {
 	for (var i = 1; i <= orbs; i++)  {
 
       orbitTorus = makeTorus(0.02*i, 0.8*i, 6, 48);
-      initBuffers(orbitTorus);
-      // got to init buffer on-the-loop for each torus to allow different orbits number
+      initBuffers(orbitTorus);	// got to init buffer on-the-loop for each torus to allow different orbits number
 
       mat4.identity(modelMatrix);
 
@@ -352,7 +351,7 @@ function drawScene() {
       mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(aa));
       mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
       rotateOrbit(modelMatrix, orbs-i, aa, bb);
-      // --rotation ends here--
+      // --rotation  ends  here--
 	  
       var rotationMatrix = mat4.clone(modelMatrix);
 
