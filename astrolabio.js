@@ -20,7 +20,7 @@ image.src = "maps/eve_sky.png";
 //  Gets Radians from a given angle in degrees
 Math.getRadians = function(degrees) {
 
-  return degrees * Math.PI / 180;
+	return degrees * Math.PI / 180;
 
 }
 
@@ -67,10 +67,6 @@ function drawModel(modelMatrix, primitive, material) {
 	var projectionMatrix  = mat4.create();
 	projectionMatrix = getProjectionMatrix();
 	setShaderProjectionMatrix(projectionMatrix);
-	
-	var reflection	= false;
-	//reflection		= getReflection();
-	setShaderReflection(reflection);
 	
 	setShaderMaterial(material);
 	
@@ -146,13 +142,13 @@ function initShaders()	{
   program.normalMatrixIndex     = gl.getUniformLocation( program, "normalMatrix");
   gl.enableVertexAttribArray(program.vertexNormalAttribute);
   
-  program.reflectionIndex		= gl.getUniformLocation( program, "reflection");
-  
   // coordenadas de textura
   program.vertexTexcoordsAttribute = gl.getAttribLocation ( program, "VertexTexcoords");
   gl.enableVertexAttribArray(program.vertexTexcoordsAttribute);
   program.repetition               = gl.getUniformLocation( program, "repetition");
   gl.uniform1f(program.repetition, 1.0);
+  
+  program.reflectionIndex		= gl.getUniformLocation( program, "reflection");
 
   // material
   program.KaIndex               = gl.getUniformLocation( program, "Material.Ka");
@@ -203,26 +199,20 @@ function initPrimitives()	{
 
 function setShaderProjectionMatrix(projectionMatrix)	{
   
-  gl.uniformMatrix4fv(program.projectionMatrixIndex, false, projectionMatrix);
+	gl.uniformMatrix4fv(program.projectionMatrixIndex, false, projectionMatrix);
   
 }
 
 function setShaderModelViewMatrix(modelViewMatrix)	{
   
-  gl.uniformMatrix4fv(program.modelViewMatrixIndex, false, modelViewMatrix);
+	gl.uniformMatrix4fv(program.modelViewMatrixIndex, false, modelViewMatrix);
   
 }
 
 function setShaderNormalMatrix(normalMatrix)	{
   
-  gl.uniformMatrix3fv(program.normalMatrixIndex, false, normalMatrix);
+	gl.uniformMatrix3fv(program.normalMatrixIndex, false, normalMatrix);
   
-}
-
-function setShaderReflection(reflection)	{
-	
-	gl.uniform1i(program.reflectionIndex, false, reflection);
-	
 }
 
 function getNormalMatrix(modelViewMatrix)	{
@@ -246,16 +236,6 @@ function getProjectionMatrix()	{
   return projectionMatrix;
   
 }
-
-//function getReflection()	{
-	
-	//var reflection = false;
-	
-	//reflection = false;
-	
-	//return reflection;
-	
-//}
 
 function getCameraMatrix()	{
   
@@ -345,17 +325,17 @@ function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	//	SKY	
-	var reflection = false;
+	gl.uniform1i(program.reflectionIndex, false);	// disables reflection
 	
 	var modelMatrix     = mat4.create();
 	
 	mat4.identity(modelMatrix);
 	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
 	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the bright side
-	drawModel(modelMatrix, exampleSphere, Background);		// Background is a neutral mat for rendering skies
+	drawModel(modelMatrix, exampleSphere, Background);				// Background is a neutral mat for rendering skies
 
     //	OBJECT
-	reflection = true;
+	gl.uniform1i(program.reflectionIndex, true);	// enables reflection
 	
 	mat4.identity(modelMatrix);
 	
@@ -369,11 +349,9 @@ function drawScene() {
       mat4.identity(modelMatrix);
 
       // --rotation begins here--
-
       mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(aa));
       mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
       rotateOrbit(modelMatrix, orbs-i, aa, bb);
-
       // --rotation ends here--
 	  
       var rotationMatrix = mat4.clone(modelMatrix);
