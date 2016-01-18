@@ -17,78 +17,21 @@ var shadingMode	= 0;
 var image = new Image();
 image.src = "maps/eve_sky.png";
 
-//  Gets Radians from a given angle in degrees
-Math.getRadians = function(degrees) {
-
-	return degrees * Math.PI / 180;
-
-}
-
-//  Rotates orbits +/-45 degrees sequentially
-function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
-
-	for (var i = 0; i < rotations; i=i+2) {
-
-		mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(beta));
-
-		if (i%2 != 0) {
-			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
-		} else {
-			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
-		}
-
-		if (i+1 < rotations ||  i%2 != 0)  {
-
-			mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
-			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
-
-		} else if (i+1 < rotations) {
-
-			mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
-			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
-
-		}
-
-	}
-
-}
-
-//  Puts together matrix to view in perspective and orders drawing
-function drawModel(modelMatrix, primitive, material) {
-	
-	var modelViewMatrix = mat4.create();
-	mat4.multiply(modelViewMatrix, getCameraMatrix(), modelMatrix);
-	setShaderModelViewMatrix(modelViewMatrix);
-	
-	var normalMatrix = mat3.create();
-	normalMatrix = getNormalMatrix(modelViewMatrix);
-	setShaderNormalMatrix(normalMatrix);
-	
-	var projectionMatrix  = mat4.create();
-	projectionMatrix = getProjectionMatrix();
-	setShaderProjectionMatrix(projectionMatrix);
-	
-	setShaderMaterial(material);
-	
-	drawSolid(primitive);
-	
-}
-
 function getWebGLContext() {
     
-  var canvas = document.getElementById("myCanvas");
+	var canvas = document.getElementById("myCanvas");
     
-  var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+	var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
     
-  for (var i = 0; i < names.length; ++i) {
+	for (var i = 0; i < names.length; ++i) {
 		try {
 		return canvas.getContext(names[i]);
 		}
 		catch(e) {
 		}
-  }
+	}
   
-  return null;
+	return null;
 
 }
 
@@ -267,18 +210,6 @@ function setShaderLight()	{	// this must be modified to allow current colors to 
   
 }
 
-function drawSolid(model)	{
-  
-  gl.bindBuffer (gl.ARRAY_BUFFER, model.idBufferVertices);
-  gl.vertexAttribPointer (program.vertexPositionAttribute,  3, gl.FLOAT, false, 8*4,   0);
-  gl.vertexAttribPointer (program.vertexNormalAttribute,    3, gl.FLOAT, false, 8*4, 3*4);
-  gl.vertexAttribPointer (program.vertexTexcoordsAttribute, 2, gl.FLOAT, false, 8*4, 6*4);
-  
-  gl.bindBuffer   (gl.ELEMENT_ARRAY_BUFFER, model.idBufferIndices);
-  gl.drawElements (gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
-  
-}
-
 // CARGA TEXTURA
 function setTexture (image)	{
   
@@ -312,6 +243,68 @@ function setTexture (image)	{
   
   // se asocia la variable de tipo sampler2D a una unidad de textura
   gl.uniform1i(program.textureIndex, 0);
+
+}
+
+function drawSolid(model)	{
+  
+  gl.bindBuffer (gl.ARRAY_BUFFER, model.idBufferVertices);
+  gl.vertexAttribPointer (program.vertexPositionAttribute,  3, gl.FLOAT, false, 8*4,   0);
+  gl.vertexAttribPointer (program.vertexNormalAttribute,    3, gl.FLOAT, false, 8*4, 3*4);
+  gl.vertexAttribPointer (program.vertexTexcoordsAttribute, 2, gl.FLOAT, false, 8*4, 6*4);
+  
+  gl.bindBuffer   (gl.ELEMENT_ARRAY_BUFFER, model.idBufferIndices);
+  gl.drawElements (gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
+  
+}
+
+//  Puts together matrix to view in perspective and orders drawing
+function drawModel(modelMatrix, primitive, material) {
+	
+	var modelViewMatrix = mat4.create();
+	mat4.multiply(modelViewMatrix, getCameraMatrix(), modelMatrix);
+	setShaderModelViewMatrix(modelViewMatrix);
+	
+	var normalMatrix = mat3.create();
+	normalMatrix = getNormalMatrix(modelViewMatrix);
+	setShaderNormalMatrix(normalMatrix);
+	
+	var projectionMatrix  = mat4.create();
+	projectionMatrix = getProjectionMatrix();
+	setShaderProjectionMatrix(projectionMatrix);
+	
+	setShaderMaterial(material);
+	
+	drawSolid(primitive);
+	
+}
+
+//  Rotates orbits +/-45 degrees sequentially
+function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
+
+	for (var i = 0; i < rotations; i=i+2) {
+
+		mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(beta));
+
+		if (i%2 != 0) {
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
+		} else {
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
+		}
+
+		if (i+1 < rotations ||  i%2 != 0)  {
+
+			mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
+
+		} else if (i+1 < rotations) {
+
+			mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
+
+		}
+
+	}
 
 }
 
@@ -388,6 +381,13 @@ function drawScene() {
 	  
 	}
 	
+}
+
+//  Gets Radians from a given angle in degrees
+Math.getRadians = function(degrees) {
+
+	return degrees * Math.PI / 180;
+
 }
 
 function initHandlers() {
