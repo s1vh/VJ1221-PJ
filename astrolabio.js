@@ -12,7 +12,7 @@ var bb = 0;   // pair orbit angle
 var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 
 var mat 		= Chrome;
-var shadingMode	= 1;
+var shadingMode	= 0;
 
 var image = new Image();
 image.src = "maps/eve_sky.png";
@@ -27,29 +27,29 @@ Math.getRadians = function(degrees) {
 //  Rotates orbits +/-45 degrees sequentially
 function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
-  for (var i = 0; i < rotations; i=i+2) {
+	for (var i = 0; i < rotations; i=i+2) {
 
-    mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(beta));
+		mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(beta));
 
-    if (i%2 != 0) {
-      mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
-    } else {
-      mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
-    }
+		if (i%2 != 0) {
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
+		} else {
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
+		}
 
-    if (i+1 < rotations ||  i%2 != 0)  {
+		if (i+1 < rotations ||  i%2 != 0)  {
 
-      mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
-      mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
+			mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
 
-    } else if (i+1 < rotations) {
+		} else if (i+1 < rotations) {
 
-      mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
-      mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
+			mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
 
-    }
+		}
 
-  }
+	}
 
 }
 
@@ -98,23 +98,18 @@ function initShaders()	{
   var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
   
   switch(shadingMode)	{
-	  
+	
 	case 0:
-		gl.shaderSource(vertexShader, document.getElementById("SkyBoxVtxShader").text);
-		gl.shaderSource(fragmentShader, document.getElementById("SkyBoxFrgShader").text);
+		gl.shaderSource(vertexShader, document.getElementById("reflectionVertexShader").text);
+		gl.shaderSource(fragmentShader, document.getElementById("reflectionFragmentShader").text);
 		break;
 		
 	case 1:
-		gl.shaderSource(vertexShader, document.getElementById("textVtxShader").text);
-		gl.shaderSource(fragmentShader, document.getElementById("textFrgShader").text);
-		break;
-		
-	case 2:
 		gl.shaderSource(vertexShader, document.getElementById("GouraudVertexShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("GouraudFragmentShader").text);
 		break;
 		
-	case 3:
+	case 2:
 		gl.shaderSource(vertexShader, document.getElementById("PhongVertexShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("PhongFragmentShader").text);
 		break;
@@ -331,7 +326,7 @@ function drawScene() {
 	
 	mat4.identity(modelMatrix);
 	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
-	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the bright side
+	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the opposite side
 	drawModel(modelMatrix, exampleSphere, Background);				// Background is a neutral mat for rendering skies
 
     //	OBJECT
@@ -472,7 +467,7 @@ function initHandlers() {
 				// 	select shader (it will be erased on release)
 				case  67:																	// iterates through shaders
 					shadingMode++;
-					if(shadingMode > 3) {shadingMode = 0};
+					if(shadingMode > 2) {shadingMode = 0};
 				
 					gl = getWebGLContext();
 					initShaders();
