@@ -10,60 +10,51 @@ var aa = 0;   // odd orbit angle
 var bb = 0;   // pair orbit angle
 
 var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
-//var myphi = 0, zeta = 0, radius = 2, fovy = 1;
 
 var mat 		= Chrome;
-var	skyMap		= 0;
-var shadingMode	= 1;
+var shadingMode	= 0;
 
 var image = new Image();
-image.src = "maps/night_right.png";
+image.src = "maps/eve_sky.png";
 
 //  Gets Radians from a given angle in degrees
 Math.getRadians = function(degrees) {
 
-  return degrees * Math.PI / 180;
+	return degrees * Math.PI / 180;
 
 }
 
 //  Rotates orbits +/-45 degrees sequentially
 function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
-  for (var i = 0; i < rotations; i=i+2) {
+	for (var i = 0; i < rotations; i=i+2) {
 
-    mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(beta));
+		mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(beta));
 
-    if (i%2 != 0) {
-      mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
-    } else {
-      mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
-    }
+		if (i%2 != 0) {
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
+		} else {
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
+		}
 
-    if (i+1 < rotations ||  i%2 != 0)  {
+		if (i+1 < rotations ||  i%2 != 0)  {
 
-      mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
-      mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
+			mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(-45));
 
-    } else if (i+1 < rotations) {
+		} else if (i+1 < rotations) {
 
-      mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
-      mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
+			mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(alfa));
+			mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
 
-    }
+		}
 
-  }
+	}
 
-}
-
-//  Concatenates model-view and camera matrix and draws given primitive
-function concatenateMtxAndDrawWire(modelViewMatrix, modelMatrix, primitive) {
-  mat4.multiply(modelViewMatrix, getCameraMatrix(), modelMatrix);
-  gl.uniformMatrix4fv(program.modelViewMatrixIndex, false, modelViewMatrix);
-  drawWire(primitive);
 }
 
 //  Puts together matrix to view in perspective and orders drawing
-function drawInPerspective(modelMatrix, primitive, material) {
+function drawModel(modelMatrix, primitive, material) {
 	
 	var modelViewMatrix = mat4.create();
 	mat4.multiply(modelViewMatrix, getCameraMatrix(), modelMatrix);
@@ -90,13 +81,13 @@ function getWebGLContext() {
   var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
     
   for (var i = 0; i < names.length; ++i) {
-    try {
-      return canvas.getContext(names[i]);
-    }
-    catch(e) {
-    }
+		try {
+		return canvas.getContext(names[i]);
+		}
+		catch(e) {
+		}
   }
-    
+  
   return null;
 
 }
@@ -107,23 +98,18 @@ function initShaders()	{
   var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
   
   switch(shadingMode)	{
-	  
+	
 	case 0:
-		gl.shaderSource(vertexShader, document.getElementById("SkyBoxVtxShader").text);
-		gl.shaderSource(fragmentShader, document.getElementById("SkyBoxFrgShader").text);
+		gl.shaderSource(vertexShader, document.getElementById("reflectionVertexShader").text);
+		gl.shaderSource(fragmentShader, document.getElementById("reflectionFragmentShader").text);
 		break;
 		
 	case 1:
-		gl.shaderSource(vertexShader, document.getElementById("textVtxShader").text);
-		gl.shaderSource(fragmentShader, document.getElementById("textFrgShader").text);
-		break;
-		
-	case 2:
 		gl.shaderSource(vertexShader, document.getElementById("GouraudVertexShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("GouraudFragmentShader").text);
 		break;
 		
-	case 3:
+	case 2:
 		gl.shaderSource(vertexShader, document.getElementById("PhongVertexShader").text);
 		gl.shaderSource(fragmentShader, document.getElementById("PhongFragmentShader").text);
 		break;
@@ -156,6 +142,8 @@ function initShaders()	{
   gl.enableVertexAttribArray(program.vertexTexcoordsAttribute);
   program.repetition               = gl.getUniformLocation( program, "repetition");
   gl.uniform1f(program.repetition, 1.0);
+  
+  program.reflectionIndex		= gl.getUniformLocation( program, "reflection");
 
   // material
   program.KaIndex               = gl.getUniformLocation( program, "Material.Ka");
@@ -194,9 +182,7 @@ function initBuffers(model)	{
 
 function initPrimitives()	{
 
-  //initBuffers(examplePlane);
-  initBuffers(exampleCube);
-  //initBuffers(exampleCone);
+  // I only need these three primitives for this build
   initBuffers(exampleCylinder);
   initBuffers(exampleSphere);
 
@@ -208,19 +194,19 @@ function initPrimitives()	{
 
 function setShaderProjectionMatrix(projectionMatrix)	{
   
-  gl.uniformMatrix4fv(program.projectionMatrixIndex, false, projectionMatrix);
+	gl.uniformMatrix4fv(program.projectionMatrixIndex, false, projectionMatrix);
   
 }
 
 function setShaderModelViewMatrix(modelViewMatrix)	{
   
-  gl.uniformMatrix4fv(program.modelViewMatrixIndex, false, modelViewMatrix);
+	gl.uniformMatrix4fv(program.modelViewMatrixIndex, false, modelViewMatrix);
   
 }
 
 function setShaderNormalMatrix(normalMatrix)	{
   
-  gl.uniformMatrix3fv(program.normalMatrixIndex, false, normalMatrix);
+	gl.uniformMatrix3fv(program.normalMatrixIndex, false, normalMatrix);
   
 }
 
@@ -299,21 +285,9 @@ function setTexture (image)	{
   // creación de la textura
   var texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
   
-  // la hacemos de tamaño potencia de dos
-  //if (!isPowerOfTwo(image.width) || !isPowerOfTwo(image.height)) {
-    
-    // Scale up the texture to the next highest power of two dimensions.
-    //var canvas    = document.createElement("canvas");
-    //canvas.width  = nextHighestPowerOfTwo(image.width);
-    //canvas.height = nextHighestPowerOfTwo(image.height);
-    
-    //var ctx       = canvas.getContext("2d");
-    //ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    //image = canvas;
-  
-  //}
+  // (set maps are always power of 2 so I don't need to check it)
   
   // datos de la textura
   gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
@@ -341,67 +315,22 @@ function setTexture (image)	{
 
 }
 
-
-
-function loadCubeMap()	{
-	
-	var texture = gl.createTexture();
-	
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture  (gl.TEXTURE_CUBE_MAP, texture);
-	
-	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-	
-	switch(skyMap)	{
-		
-		case 0:
-			var faces = [["night_right.png", gl.TEXTURE_CUBE_MAP_POSITIVE_X],
-						 ["night_left.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_X],
-						 ["night_top.png", gl.TEXTURE_CUBE_MAP_POSITIVE_Y],
-						 ["night_bottom.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_Y],
-						 ["night_front.png", gl.TEXTURE_CUBE_MAP_POSITIVE_Z],
-						 ["night_back.png", gl.TEXTURE_CUBE_MAP_NEGATIVE_Z]]
-						 ;
-			break;
-	}
-	
-	for (var i = 0; i < faces.length; i++)	{
-		
-		var face = faces[i][1];
-		var image = new Image();
-		
-		image.onload = function(texture, face, image)	{
-			return function()	{
-				gl.texImage2D(face, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-			}
-		}	(texture, face, image);
-		
-		image.src = faces[i][0];
-	}
-	
-	program.textureIndex = gl.getUniformLocation(program, 'myTexture');
-	gl.uniform1i(program.textureIndex, 0);
-	
-}
-
 function drawScene() {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	//	SKY	
-	var skybox = true;
+	gl.uniform1i(program.reflectionIndex, false);	// disables reflection at the shader
 	
 	var modelMatrix     = mat4.create();
 	
 	mat4.identity(modelMatrix);
-	mat4.scale(modelMatrix, modelMatrix, [100, 100, 100]);
-	drawInPerspective(modelMatrix, exampleCube, mat);
+	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
+	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the opposite side
+	drawModel(modelMatrix, exampleSphere, Background);				// Background is a neutral mat for rendering skies
 
     //	OBJECT
-	var skybox = false;
+	gl.uniform1i(program.reflectionIndex, true);	// enables reflection at the shader
 	
 	mat4.identity(modelMatrix);
 	
@@ -409,23 +338,20 @@ function drawScene() {
 	for (var i = 1; i <= orbs; i++)  {
 
       orbitTorus = makeTorus(0.02*i, 0.8*i, 6, 48);
-      initBuffers(orbitTorus);
-      // got to init buffer on-the-loop for each torus to allow different orbits number
+      initBuffers(orbitTorus);	// got to init buffer on-the-loop for each torus to allow different orbits number
 
       mat4.identity(modelMatrix);
 
       // --rotation begins here--
-
       mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(aa));
       mat4.rotateZ(modelMatrix, modelMatrix, Math.getRadians(45));
       rotateOrbit(modelMatrix, orbs-i, aa, bb);
-
-      // --rotation ends here--
+      // --rotation  ends  here--
 	  
       var rotationMatrix = mat4.clone(modelMatrix);
 
       mat4.scale(modelMatrix, modelMatrix, [1/orbs, 1/orbs, 1/i]); // normalize orbits
-	  drawInPerspective(modelMatrix, orbitTorus, mat);
+	  drawModel(modelMatrix, orbitTorus, mat);
 	  
 	  // ORBS
 	  mat4.copy(modelMatrix, rotationMatrix);
@@ -442,7 +368,7 @@ function drawScene() {
 	  mat4.translate(modelMatrix, modelMatrix, [i*0.4*2/orbs, 0, 0]);
 	  mat4.scale(modelMatrix, modelMatrix, [1/orbs/3, 1/orbs/3, 1/orbs/3]);
 	  
-	  drawInPerspective(modelMatrix, exampleSphere, mat);
+	  drawModel(modelMatrix, exampleSphere, mat);
 	  
 	  // HANDLERS
       for (var j = -1; j < 2; j=j+2)  { // --two handlers for each orbit--
@@ -455,10 +381,11 @@ function drawScene() {
 			mat4.rotateY(modelMatrix, modelMatrix, Math.getRadians(j*90));
 			mat4.scale(modelMatrix, modelMatrix, [0.01, 0.01, 0.4*2/orbs]);
 
-			drawInPerspective(modelMatrix, exampleCylinder, mat);
+			drawModel(modelMatrix, exampleCylinder, mat);
 			
 		}
       }
+	  
 	}
 	
 }
@@ -472,64 +399,64 @@ function initHandlers() {
 	var canvas = document.getElementById("myCanvas");
 
 	canvas.addEventListener("mousedown",
-		function(event) {
-			mouseDown  = true;
-			lastMouseX = event.clientX;
-			lastMouseY = event.clientY;
-		},
-		false);
+			function(event) {
+				mouseDown  = true;
+				lastMouseX = event.clientX;
+				lastMouseY = event.clientY;
+			},
+			false);
 
 	canvas.addEventListener("mouseup",
-		function() {
-			mouseDown = false;
-		},
-		false);
+			function() {
+				mouseDown = false;
+			},
+			false);
 
 	canvas.addEventListener("mousemove",
-		function (event) {
+			function (event) {
 			
-			if (!mouseDown) {
-				return;
-			}
-		var newX = event.clientX;
-		var newY = event.clientY;
+				if (!mouseDown) {
+					return;
+				}
+			var newX = event.clientX;
+			var newY = event.clientY;
 		
-		if (event.shiftKey == 1) {
+			if (event.shiftKey == 1) {
 			
-			if (event.altKey == 1) {
+				if (event.altKey == 1) {
 				
-				// fovy
-				fovy -= (newY - lastMouseY) / 100.0;
+					// fovy
+					fovy -= (newY - lastMouseY) / 100.0;
 				
-				if (fovy < 0.001) {
-					fovy = 0.1;
+					if (fovy < 0.001) {
+						fovy = 0.1;
+					}
+				} else {
+					// radius
+					radius -= (newY - lastMouseY) / 10.0;
+				
+					if (radius < 0.01) {
+						radius = 0.01;
+					}
 				}
 			} else {
-				// radius
-				radius -= (newY - lastMouseY) / 10.0;
-				
-				if (radius < 0.01) {
-					radius = 0.01;
+				// position
+				myphi -= (newX - lastMouseX);
+				zeta  += (newY - lastMouseY);
+			
+				if (zeta < -80) {
+					zeta = -80.0;
+				}
+				if (zeta > 80) {
+					zeta = 80;
 				}
 			}
-		} else {
-			// position
-			myphi -= (newX - lastMouseX);
-			zeta  += (newY - lastMouseY);
-			
-			if (zeta < -80) {
-				zeta = -80.0;
-			}
-			if (zeta > 80) {
-				zeta = 80;
-			}
-		}
-		lastMouseX = newX
-		lastMouseY = newY;
+			lastMouseX = newX
+			lastMouseY = newY;
 	  
-		requestAnimationFrame(drawScene);
-    },
-    false);
+			requestAnimationFrame(drawScene);
+		},
+		false);
 	
 	// KEYBOARD EVENTS
 	document.addEventListener("keydown",
@@ -540,7 +467,7 @@ function initHandlers() {
 				// 	select shader (it will be erased on release)
 				case  67:																	// iterates through shaders
 					shadingMode++;
-					if(shadingMode > 3) {shadingMode = 0};
+					if(shadingMode > 2) {shadingMode = 0};
 				
 					gl = getWebGLContext();
 					initShaders();
@@ -575,34 +502,17 @@ function initHandlers() {
 
 }        
 
-//function setColor (index, value) {
-
-  //var myColor = value.substr(1); // para eliminar el # del #FCA34D
-      
-  //var r = myColor.charAt(0) + '' + myColor.charAt(1);
-  //var g = myColor.charAt(2) + '' + myColor.charAt(3);
-  //var b = myColor.charAt(4) + '' + myColor.charAt(5);
-
-  //r = parseInt(r, 16) / 255.0;
-  //g = parseInt(g, 16) / 255.0;
-  //b = parseInt(b, 16) / 255.0;
-  
-  //gl.uniform3f(index, r, g, b);
-  
-//}
-
 function initWebGL() {
     
   gl = getWebGLContext();
     
   if (!gl) {
-    alert("WebGL no está disponible");
-    return;
-  }
+		alert("WebGL no está disponible");
+		return;
+	}
 
   initShaders();
   initPrimitives();
-  //loadCubeMap();
   setTexture(image);
   initRendering();
   initHandlers();

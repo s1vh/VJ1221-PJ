@@ -104,82 +104,60 @@
 		
 	</script>
 	
-	<!--Textures Vertex Shader-->
-    <script id="textVtxShader" type="x-shader/x-vertex">
+	<!--Reflection Vertex Shader-->
+    <script id="reflectionVertexShader" type="x-shader/x-vertex">
         
         uniform   mat4 projectionMatrix;
         uniform   mat4 modelViewMatrix;
         uniform   mat3 normalMatrix;
+		
+		uniform   bool reflection;
         
         attribute vec3 VertexPosition;
         attribute vec3 VertexNormal;
         attribute vec2 VertexTexcoords;
         
-        varying vec3 N, ec;
-        varying vec2 texCoords;
+        varying   vec3 R, N, ec;
+        varying   vec2 texCoords;
         
         void main()  {
-          
-          N  = normalize(normalMatrix * VertexNormal);
-          vec4 ecPosition = modelViewMatrix * vec4(VertexPosition,1.0);
-          ec = vec3(ecPosition);
-          
-          gl_Position = projectionMatrix * ecPosition;
-          texCoords   = VertexTexcoords;
+			
+			N  = normalize(normalMatrix * VertexNormal);
+			vec4 ecPosition = modelViewMatrix * vec4(VertexPosition, 1.0);
+			ec = vec3(ecPosition);
+			
+			gl_Position = projectionMatrix * ecPosition;
+		  
+			if (reflection)	{
+				
+				R = normalize(ec * N);
+				texCoords   = vec2(R[0], R[1]);
+				
+			} else	{
+				
+				texCoords   = VertexTexcoords;
+				
+			}
           
         }
       
-      </script>
-	
-	<!--SkyBox Vertex Shader-->
-	<script id="SkyBoxVtxShader" type="x-shader/x-vertex">
-		
-		uniform   mat4 projectionMatrix;
-		uniform   mat4 modelViewMatrix;
-		uniform   mat3 normalMatrix;
-		
-		uniform   bool skybox;
-		uniform   mat3 invT;
-		
-		attribute vec3 VertexPosition;
-		attribute vec3 VertexNormal;
-		//attribute vec2 VertexTexcoords;
-		
-		varying vec3 R;
-		//varying vec2 texCoords;
-		
-		void main()	{
-			
-			vec3 N          = normalize(normalMatrix * VertexNormal);
-			vec4 ecPosition = modelViewMatrix * vec4(VertexPosition,1.0);
-			vec3 ec         = vec3(ecPosition);
-			
-			gl_Position     = projectionMatrix * ecPosition;
-			
-			if (skybox)	{
-				R = vec3(VertexPosition);
-			}	else	{
-				R = invT * reflect (normalize(ec), N);
-			}
-		}
-    
-	</script>
+    </script>
 	
 	<!--//	FRAGMENT SHADER	----------------------------------------------------------->
 	
 	<!--Gouraud Fragment Shader-->
     <script id="GouraudFragmentShader" type="x-shader/x-fragment">
       
-      precision mediump float;
+		precision mediump float;
       
-      varying vec3 colorOut;
+		varying vec3 colorOut;
 
-      void main() {
-      
-        gl_FragColor = vec4(colorOut, 1);
-      
-      }
-      
+		void main() {
+			
+			gl_FragColor = vec4(colorOut, 1);
+		
+		}
+		
     </script>
 	
 	<!--Phong Fragment Shader-->
@@ -211,7 +189,7 @@
 			vec3  diffuse  = vec3(0.0);
 			vec3  specular = vec3(0.0);
 			
-			float NdotL    = dot (N,L);
+			float NdotL    = dot (N, L);
 			
 			if (NdotL > 0.0)	{
 				vec3  R       = reflect(-L, N);
@@ -236,8 +214,8 @@
 		
 	</script>
 	
-	<!--Textures Fragment Shader-->
-      <script id="textFrgShader" type="x-shader/x-fragment">
+	<!--Reflection Fragment Shader-->
+	<script id="reflectionFragmentShader" type="x-shader/x-fragment">
         
         precision mediump float;
         struct LightData {
@@ -257,6 +235,7 @@
         uniform MaterialData Material;
       
         uniform sampler2D myTexture;
+		//uniform samplerCube myTexture;
         uniform float     repetition;
         
         varying vec3 N, ec;
@@ -272,13 +251,14 @@
         
           if (NdotL > 0.0) {
             vec3  R       = reflect(-L, N);;
-            float RdotV_n = pow(max(0.0, dot(R,V)), Material.alpha);
+            float RdotV_n = pow(max(0.0, dot(R, V)), Material.alpha);
           
             diffuse  = NdotL   * (Light.Ld * Material.Kd);
             specular = RdotV_n * (Light.Ls * Material.Ks);
           }
         
           return (ambient + diffuse + specular);
+		  
         }
       
         void main() {
@@ -287,27 +267,10 @@
           vec3 L = normalize(Light.Position - ec);
           vec3 V = normalize(-ec);
         
-          //gl_FragColor = mix(texture2D(myTexture, texCoords), vec4(phong(n,L,V),1.0), 0.3);
-          gl_FragColor = texture2D(myTexture, texCoords*repetition) * vec4(phong(n,L,V),1.0) * 1.6;
+          gl_FragColor = texture2D(myTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
         
         }
       
-      </script>
-	
-	<!--SkyBox Fragment Shader-->
-	<script id="SkyBoxFrgShader" type="x-shader/x-fragment">
-		
-		precision mediump float;
-		
-		uniform samplerCube myTexture;
-		
-		varying vec3 R;
-		
-		void main()	{
-			//gl_FragColor = textureCube(myTexture, texCoords);
-			gl_FragColor = textureCube(myTexture, R);
-		}
-	
 	</script>
     
     <script src="gl-matrix-min.js"></script>

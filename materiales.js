@@ -5,7 +5,6 @@ var Brass = {
   "alpha"       : [ 27.8974 ]
 };
 
-  
 var  Bronze = {
   "mat_ambient" : [ 0.2125, 0.1275, 0.054 ],
   "mat_diffuse" : [ 0.714, 0.4284, 0.18144 ],
@@ -200,4 +199,11 @@ var Yellow_rubber = {
   "mat_diffuse" : [ 0.5,0.5,0.4 ],
   "mat_specular": [ 0.7,0.7,0.04 ],
   "alpha"       : [ 10.0 ]
+};
+
+var Background = {
+  "mat_ambient" : [ 0.5,0.5,0.5 ],
+  "mat_diffuse" : [ 0.5,0.5,0.5 ],
+  "mat_specular": [ 0.5,0.5,0.5 ],
+  "alpha"       : [ 50.0 ]
 };
