@@ -192,6 +192,24 @@ function getCameraMatrix()	{
   
 }
 
+function getStaticCameraMatrix()	{
+  
+  var _phi  = myphi * Math.PI / 180.0;
+  var _zeta = zeta  * Math.PI / 180.0;
+  
+  var x = 0, y = 0, z = 0;
+  z = Math.log(radius) * Math.cos(_zeta) * Math.cos(_phi);
+  x = Math.log(radius) * Math.cos(_zeta) * Math.sin(_phi);
+  y = Math.log(radius) * Math.sin(_zeta);
+  // I use a logarithmic relation so I create some zoom effect without leaving the sky orb
+  
+  var cameraMatrix = mat4.create();
+  mat4.lookAt(cameraMatrix, [x, y, z], [0, 0, 0], [0, 1, 0]);
+  
+  return cameraMatrix;
+  
+}
+
 function setShaderMaterial(material)	{
 
   gl.uniform3fv(program.KaIndex,    material.mat_ambient);
@@ -258,11 +276,32 @@ function drawSolid(model)	{
   
 }
 
-//  Puts together matrix to view in perspective and orders drawing
+//  Joins model-camera-view matrixes to create perspective and orders drawing
 function drawModel(modelMatrix, primitive, material) {
 	
 	var modelViewMatrix = mat4.create();
 	mat4.multiply(modelViewMatrix, getCameraMatrix(), modelMatrix);
+	setShaderModelViewMatrix(modelViewMatrix);
+	
+	var normalMatrix = mat3.create();
+	normalMatrix = getNormalMatrix(modelViewMatrix);
+	setShaderNormalMatrix(normalMatrix);
+	
+	var projectionMatrix  = mat4.create();
+	projectionMatrix = getProjectionMatrix();
+	setShaderProjectionMatrix(projectionMatrix);
+	
+	setShaderMaterial(material);
+	
+	drawSolid(primitive);
+	
+}
+
+//	Draws the background while ignoring radial distance
+function drawBackground(modelMatrix, primitive, material) {
+	
+	var modelViewMatrix = mat4.create();
+	mat4.multiply(modelViewMatrix, getStaticCameraMatrix(), modelMatrix);
 	setShaderModelViewMatrix(modelViewMatrix);
 	
 	var normalMatrix = mat3.create();
@@ -320,7 +359,7 @@ function drawScene() {
 	mat4.identity(modelMatrix);
 	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
 	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the opposite side
-	drawModel(modelMatrix, exampleSphere, Background);				// Background is a neutral mat for rendering skies
+	drawBackground(modelMatrix, exampleSphere, Background);				// Background is a neutral mat for rendering skies
 
     //	OBJECT
 	gl.uniform1i(program.reflectionIndex, true);	// enables reflection at the shader
