@@ -298,13 +298,15 @@
 			
 			if(depth == 1)	{
 			
-				gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+				//gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+				gl_FragColor = texture2D(innerTexture, texCoords);
 				
 			}
 			
 			if(depth == 2)	{
 			
-				gl_FragColor = texture2D(outerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+				//gl_FragColor = texture2D(outerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+				gl_FragColor = texture2D(outerTexture, texCoords);
 				
 			}
 			
