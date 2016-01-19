@@ -237,11 +237,11 @@ function setShaderLight()	{	// this must be modified to allow current colors to 
 }
 
 // CARGA TEXTURA
-function setTexture(tag, image, unit)	{
+function setTexture(tag, name, image, unit)	{
 	
 	// creación de la textura
-	var texture = gl.createTexture();
-	gl.bindTexture(gl.TEXTURE_2D, texture);
+	name = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, name);
 	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
 	
 	// (set maps are always power of 2 so I don't need to check it)
@@ -269,9 +269,10 @@ function setTexture(tag, image, unit)	{
 			
 		case 1:
 			gl.activeTexture(gl.TEXTURE1); break;
+			
 	}
 	
-	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.bindTexture(gl.TEXTURE_2D, name);
 	
 	// se obtiene la referencia a la variable de tipo sampler2D en el shader
 	program.textureIndex = gl.getUniformLocation(program, tag);
@@ -605,7 +606,9 @@ function initWebGL() {
 	}
 	
 	initShaders();
-	setTexture('innerTexture', innerBackgroundImage, 0);
+	
+	var innerBackground;
+	setTexture('innerTexture', innerBackground, innerBackgroundImage, 0);
 	//setTexture('outerTexture', outerBackgroundImage, 1);
 	initPrimitives();
 	initRendering();
