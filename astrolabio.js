@@ -241,6 +241,18 @@ function setTexture(tag, name, image, unit)	{
 	
 	// creación de la textura
 	name = gl.createTexture();
+	
+	// se marca como activa la unidad correspondiente
+	switch(unit)	{
+		
+		case 0:
+			gl.activeTexture(gl.TEXTURE0); break;
+			
+		case 1:
+			gl.activeTexture(gl.TEXTURE1); break;
+			
+	}
+	
 	gl.bindTexture(gl.TEXTURE_2D, name);
 	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 	
@@ -260,18 +272,7 @@ function setTexture(tag, name, image, unit)	{
 	// creación del mipmap
 	gl.generateMipmap(gl.TEXTURE_2D);
 	
-	// se activa la unidad cero y se le asigna el objeto textura
-	//gl.activeTexture(gl.TEXTURE0);
-	//switch(unit)	{
-		
-		//case 0:
-			//gl.activeTexture(gl.TEXTURE0); break;
-			
-		//case 1:
-			//gl.activeTexture(gl.TEXTURE1); break;
-			
-	//}
-	
+	// se asigna el objeto textura a la unidad activa
 	gl.bindTexture(gl.TEXTURE_2D, name);
 	
 	// se obtiene la referencia a la variable de tipo sampler2D en el shader
@@ -608,11 +609,8 @@ function initWebGL() {
 	initShaders();
 	
 	var innerBackground;
-	gl.activeTexture(gl.TEXTURE0);
 	setTexture('innerTexture', innerBackground, innerBackgroundImage, 0);
-	
 	var outerBackground;
-	gl.activeTexture(gl.TEXTURE1);
 	setTexture('outerTexture', outerBackground, outerBackgroundImage, 1);
 	
 	initPrimitives();
