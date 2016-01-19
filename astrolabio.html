@@ -291,15 +291,15 @@
 			vec3 V = normalize(-ec);
 			
 			if(depth == 0)	{
-			
+				
 				gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 2.0) * 4.0;
+				//gl_FragColor = (texture2D(innerTexture, texCoords) + texture2D(outerTexture, texCoords)) * vec4(phong(n,L,V), 1.0) * 1.8;
 				
 			}
 			
 			if(depth == 1)	{
 			
 				gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 1.8) * 2.4;
-				//gl_FragColor = texture2D(innerTexture, texCoords);
 				
 			}
 			

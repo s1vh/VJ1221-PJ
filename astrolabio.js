@@ -401,7 +401,7 @@ function drawScene() {
 
     //	OBJECT
 	gl.uniform1i(program.reflectionIndex, true);	// enables reflection at the shader
-	gl.uniform1i(program.depthIndex, 0);
+	gl.uniform1i(program.depthIndex, 0);			// sets object depth
 	
 	mat4.identity(modelMatrix);
 	
@@ -568,17 +568,18 @@ function initHandlers() {
 			switch (event.keyCode)	{
 				
 				// iterates through shaders
-				case  67:
+				// *LOCKED*
+				//case  67:
 				
-					shadingMode++;
+					//shadingMode++;
 					
-					if(shadingMode > 2) {shadingMode = 0};
+					//if(shadingMode > 2) {shadingMode = 0};
 				
-					gl = getWebGLContext();
-					initShaders();
-					initRendering();
+					//gl = getWebGLContext();
+					//initShaders();
+					//initRendering();
 					
-					break;
+					//break;
 				
 				// orbit handlers (it will be mouse-wise on release)
 				case  38: { a+=0.1; aa+=a; break; }		// alfa up    (up arrow)
