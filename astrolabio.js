@@ -91,9 +91,8 @@ function initShaders()	{
 	// coordenadas de textura
 	program.vertexTexcoordsAttribute = gl.getAttribLocation ( program, "VertexTexcoords");
 	gl.enableVertexAttribArray(program.vertexTexcoordsAttribute);
-	//program.repetition               = gl.getUniformLocation( program, "repetition");
-	//gl.uniform1f(program.repetition, 1.0);
 	
+	// bind control parameters
 	program.reflectionIndex		= gl.getUniformLocation( program, "reflection");
 	
 	// material
