@@ -261,7 +261,16 @@ function setTexture(tag, image, unit)	{
 	gl.generateMipmap(gl.TEXTURE_2D);
 	
 	// se activa la unidad cero y se le asigna el objeto textura
-	gl.activeTexture(gl.TEXTURE0);
+	//gl.activeTexture(gl.TEXTURE0);
+	switch(unit)	{
+		
+		case 0:
+			gl.activeTexture(gl.TEXTURE0); break;
+			
+		case 1:
+			gl.activeTexture(gl.TEXTURE1); break;
+	}
+	
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 	
 	// se obtiene la referencia a la variable de tipo sampler2D en el shader
