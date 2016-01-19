@@ -2,9 +2,9 @@
 var gl, program;
 var myTorus;
 
-var orbs = 4; // I want to be able to change the number of orbits
+var orbs = 4;	// I want to be able to change the number of orbits
 
-var  a	 = 1;	  // odd orbit angle increment
+var  a	 = 1;	// odd orbit angle increment
 var  b	 = 1;   // pair orbit angle increment
 var aa	 = 0;   // odd orbit angle
 var bb	 = 0;   // pair orbit angle
@@ -53,18 +53,24 @@ function initShaders()	{
 	switch(shadingMode)	{
 		
 		case 0:
+		
 			gl.shaderSource(vertexShader, document.getElementById("reflectionVertexShader").text);
 			gl.shaderSource(fragmentShader, document.getElementById("reflectionFragmentShader").text);
+			
 			break;
 			
 		case 1:
+		
 			gl.shaderSource(vertexShader, document.getElementById("GouraudVertexShader").text);
 			gl.shaderSource(fragmentShader, document.getElementById("GouraudFragmentShader").text);
+			
 			break;
 			
 		case 2:
+		
 			gl.shaderSource(vertexShader, document.getElementById("PhongVertexShader").text);
 			gl.shaderSource(fragmentShader, document.getElementById("PhongFragmentShader").text);
+			
 			break;
 			
 	}
@@ -251,9 +257,11 @@ function setTexture(tag, name, image, unit)	{
 	switch(unit)	{
 		
 		case 0:
+		
 			gl.activeTexture(gl.TEXTURE0); break;
 			
 		case 1:
+		
 			gl.activeTexture(gl.TEXTURE1); break;
 			
 	}
@@ -602,6 +610,82 @@ function initHandlers() {
 						play = true;
 						requestAnimationFrame(drawScene);
 						
+					}
+					
+					break;
+					
+				case  77:		// material switch
+					
+					switch (mat)	{
+						
+						case Brass:
+							
+							mat = Bronze;			break;
+							
+						case Bronze:
+							
+							mat = Polished_bronze;	break;
+							
+						case Polished_bronze:
+							
+							mat = Chrome;			break;
+							
+						case Chrome:
+							
+							mat = Copper;			break;
+							
+						case Copper:
+							
+							mat = Polished_copper;	break;
+							
+						case Polished_copper:
+							
+							mat = Gold;				break;
+							
+						case Gold:
+							
+							mat = Polished_gold;	break;
+							
+						case Polished_gold:
+							
+							mat = Tin;				break;
+							
+						case Tin:
+							
+							mat = Silver;			break;
+							
+						case Silver:
+							
+							mat = Polished_silver;	break;
+							
+						case Polished_silver:
+							
+							mat = Esmerald;			break;
+							
+						case Esmerald:
+							
+							mat = Jade;				break;
+							
+						case Jade:
+							
+							mat = Obsidian;			break;
+							
+						case Obsidian:
+							
+							mat = Perl;				break;
+							
+						case Perl:
+							
+							mat = Ruby;				break;
+							
+						case Ruby:
+							
+							mat = Turquoise;		break;
+							
+						case Turquoise:
+							
+							mat = Brass;			break;
+							
 					}
 					
 					break;
