@@ -257,6 +257,7 @@
         uniform MaterialData Material;
 		uniform sampler2D innerTexture;
 		uniform sampler2D outerTexture;
+		uniform int 	  depth;
         
         varying vec3 N, ec;
         varying vec2 texCoords;
@@ -289,7 +290,23 @@
 			vec3 L = normalize(Light.Position - ec);
 			vec3 V = normalize(-ec);
 			
-			gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+			if(depth == 0)	{
+			
+				gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+				
+			}
+			
+			if(depth == 1)	{
+			
+				gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+				
+			}
+			
+			if(depth == 2)	{
+			
+				gl_FragColor = texture2D(outerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+				
+			}
 			
         }
       

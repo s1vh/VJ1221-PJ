@@ -94,6 +94,7 @@ function initShaders()	{
 	
 	// bind control parameters
 	program.reflectionIndex		= gl.getUniformLocation( program, "reflection");
+	program.depthIndex			= gl.getUniformLocation( program, "depth");
 	
 	// material
 	program.KaIndex               = gl.getUniformLocation( program, "Material.Ka");
@@ -373,18 +374,29 @@ function drawScene() {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	//	SKY	
-	gl.uniform1i(program.reflectionIndex, false);	// disables reflection at the shader
-	
 	var modelMatrix     = mat4.create();
 	
+	//	SKY
+	gl.uniform1i(program.reflectionIndex, false);	// disables reflection at the shader
+	
+	// outer sky sphere
+	gl.uniform1i(program.depthIndex, 2);			// sets object depth
+	
 	mat4.identity(modelMatrix);
-	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
+	mat4.scale(modelMatrix, modelMatrix, [75, 75, 75]);
+	drawBackground(modelMatrix, exampleSphere, Background);			// Background is a neutral mat for rendering skies
+	
+	// inner sky sphere
+	gl.uniform1i(program.depthIndex, 1);			// sets object depth
+	
+	mat4.identity(modelMatrix);
+	mat4.scale(modelMatrix, modelMatrix, [25, 25, 25]);
 	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the opposite side
-	drawBackground(modelMatrix, exampleSphere, Background);				// Background is a neutral mat for rendering skies
+	drawBackground(modelMatrix, exampleSphere, Background);			// Background is a neutral mat for rendering skies
 
     //	OBJECT
 	gl.uniform1i(program.reflectionIndex, true);	// enables reflection at the shader
+	gl.uniform1i(program.depthIndex, 0);
 	
 	mat4.identity(modelMatrix);
 	
