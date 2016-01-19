@@ -112,11 +112,11 @@ function initShaders()	{
 
 function initRendering()	{
 	
-	gl.clearColor(0.15,0.15,0.15,1.0);
+	gl.clearColor(0.0,0.0,0.0,1.0);
 	gl.enable(gl.DEPTH_TEST);
 	
 	gl.enable(gl.BLEND);
-	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+	gl.blendFunc(gl.ONE, gl.ONE_MINUS_DST_COLOR);
 	
 	setShaderLight();
 	
@@ -315,6 +315,7 @@ function drawModel(modelMatrix, primitive, material) {
 	
 	setShaderMaterial(material);
 	
+	gl.disable(gl.BLEND);	// disables transparency
 	drawSolid(primitive);
 	
 }
@@ -336,6 +337,7 @@ function drawBackground(modelMatrix, primitive, material) {
 	
 	setShaderMaterial(material);
 	
+	gl.enable(gl.BLEND);	// enables transparency
 	drawSolid(primitive);
 	
 }
@@ -386,14 +388,14 @@ function drawScene() {
 	gl.uniform1i(program.depthIndex, 2);			// sets object depth
 	
 	mat4.identity(modelMatrix);
-	mat4.scale(modelMatrix, modelMatrix, [75, 75, 75]);
+	mat4.scale(modelMatrix, modelMatrix, [90, 90, 90]);
 	drawBackground(modelMatrix, exampleSphere, Background);			// Background is a neutral mat for rendering skies
 	
 	// inner sky sphere
 	gl.uniform1i(program.depthIndex, 1);			// sets object depth
 	
 	mat4.identity(modelMatrix);
-	mat4.scale(modelMatrix, modelMatrix, [25, 25, 25]);
+	mat4.scale(modelMatrix, modelMatrix, [40, 40, 40]);
 	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the opposite side
 	drawBackground(modelMatrix, exampleSphere, Background);			// Background is a neutral mat for rendering skies
 
