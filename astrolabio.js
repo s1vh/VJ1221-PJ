@@ -467,17 +467,23 @@ function initHandlers() {
 					// fovy
 					fovy -= (newY - lastMouseY) / 100.0;
 				
-					if (fovy < 0.001) {
-						fovy = 0.1;
+					if (fovy < 1) {
+						fovy = 1;
 					}
+					
+					if (fovy > 3.13)	{
+						fovy = 3.13;	// less than PI for preventing numerical precision issues
+					}
+					
 				} else {
 					// radius
 					radius -= (newY - lastMouseY) / 10.0;
 				
-					if (radius < 0.01) {
-						radius = 0.01;
+					if (radius < 1.1) {
+						radius = 1.1;
 					}
 				}
+				
 			} else {
 				// position
 				myphi -= (newX - lastMouseX);
@@ -486,6 +492,7 @@ function initHandlers() {
 				if (zeta < -80) {
 					zeta = -80.0;
 				}
+				
 				if (zeta > 80) {
 					zeta = 80;
 				}
@@ -495,6 +502,7 @@ function initHandlers() {
 	  
 			requestAnimationFrame(drawScene);
 		},
+		
 		false);
 	
 	// KEYBOARD EVENTS
