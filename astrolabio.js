@@ -2,20 +2,25 @@
 var gl, program;
 var myTorus;
 
-var orbs = 4; // I want to be able to change the number of orbits
+var orbs = 4;	// I want to be able to change the number of orbits
 
-var  a = 0;	  // odd orbit angle increment
-var  b = 0;   // pair orbit angle increment
-var aa = 0;   // odd orbit angle
-var bb = 0;   // pair orbit angle
+var  a	 = 1;	// odd orbit angle increment
+var  b	 = 1;   // pair orbit angle increment
+var aa	 = 0;   // odd orbit angle
+var bb	 = 0;   // pair orbit angle
+
+var play = true;
 
 var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 
 var mat 		= Chrome;
 var shadingMode	= 0;
 
-var image = new Image();
-image.src = "maps/eve_sky.png";
+var innerBackgroundImage = new Image();
+innerBackgroundImage.src = "maps/eve_sky.png";
+
+var outerBackgroundImage = new Image();
+outerBackgroundImage.src = "maps/starlight_sky.png";
 
 function getWebGLContext() {
     
@@ -48,18 +53,24 @@ function initShaders()	{
 	switch(shadingMode)	{
 		
 		case 0:
+		
 			gl.shaderSource(vertexShader, document.getElementById("reflectionVertexShader").text);
 			gl.shaderSource(fragmentShader, document.getElementById("reflectionFragmentShader").text);
+			
 			break;
 			
 		case 1:
+		
 			gl.shaderSource(vertexShader, document.getElementById("GouraudVertexShader").text);
 			gl.shaderSource(fragmentShader, document.getElementById("GouraudFragmentShader").text);
+			
 			break;
 			
 		case 2:
+		
 			gl.shaderSource(vertexShader, document.getElementById("PhongVertexShader").text);
 			gl.shaderSource(fragmentShader, document.getElementById("PhongFragmentShader").text);
+			
 			break;
 			
 	}
@@ -88,10 +99,10 @@ function initShaders()	{
 	// coordenadas de textura
 	program.vertexTexcoordsAttribute = gl.getAttribLocation ( program, "VertexTexcoords");
 	gl.enableVertexAttribArray(program.vertexTexcoordsAttribute);
-	program.repetition               = gl.getUniformLocation( program, "repetition");
-	gl.uniform1f(program.repetition, 1.0);
 	
+	// bind control parameters
 	program.reflectionIndex		= gl.getUniformLocation( program, "reflection");
+	program.depthIndex			= gl.getUniformLocation( program, "depth");
 	
 	// material
 	program.KaIndex               = gl.getUniformLocation( program, "Material.Ka");
@@ -109,8 +120,11 @@ function initShaders()	{
 
 function initRendering()	{
 	
-	gl.clearColor(0.15,0.15,0.15,1.0);
+	gl.clearColor(0.0,0.0,0.0,1.0);
 	gl.enable(gl.DEPTH_TEST);
+	
+	gl.enable(gl.BLEND);
+	gl.blendFunc(gl.ONE, gl.ONE_MINUS_DST_COLOR);
 	
 	setShaderLight();
 	
@@ -234,17 +248,31 @@ function setShaderLight()	{	// this must be modified to allow current colors to 
 }
 
 // CARGA TEXTURA
-function setTexture (image)	{
+function setTexture(tag, name, image, unit)	{
 	
 	// creación de la textura
-	var texture = gl.createTexture();
-	gl.bindTexture(gl.TEXTURE_2D, texture);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+	name = gl.createTexture();
+	
+	// se marca como activa la unidad correspondiente
+	switch(unit)	{
+		
+		case 0:
+		
+			gl.activeTexture(gl.TEXTURE0); break;
+			
+		case 1:
+		
+			gl.activeTexture(gl.TEXTURE1); break;
+			
+	}
+	
+	gl.bindTexture(gl.TEXTURE_2D, name);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 	
 	// (set maps are always power of 2 so I don't need to check it)
 	
 	// datos de la textura
-	gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+	gl.texImage2D(gl.TEXTURE_2D, false, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
 	
 	// parámetros de filtrado
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -257,15 +285,14 @@ function setTexture (image)	{
 	// creación del mipmap
 	gl.generateMipmap(gl.TEXTURE_2D);
 	
-	// se activa la unidad cero y se le asigna el objeto textura
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, texture);
+	// se asigna el objeto textura a la unidad activa
+	gl.bindTexture(gl.TEXTURE_2D, name);
 	
 	// se obtiene la referencia a la variable de tipo sampler2D en el shader
-	program.textureIndex = gl.getUniformLocation(program, 'myTexture');
+	program.textureIndex = gl.getUniformLocation(program, tag);
 	
 	// se asocia la variable de tipo sampler2D a una unidad de textura
-	gl.uniform1i(program.textureIndex, 0);
+	gl.uniform1i(program.textureIndex, unit);
 	
 }
 
@@ -298,6 +325,7 @@ function drawModel(modelMatrix, primitive, material) {
 	
 	setShaderMaterial(material);
 	
+	gl.disable(gl.BLEND);	// disables transparency
 	drawSolid(primitive);
 	
 }
@@ -319,6 +347,7 @@ function drawBackground(modelMatrix, primitive, material) {
 	
 	setShaderMaterial(material);
 	
+	gl.enable(gl.BLEND);	// enables transparency
 	drawSolid(primitive);
 	
 }
@@ -360,18 +389,29 @@ function drawScene() {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	//	SKY	
-	gl.uniform1i(program.reflectionIndex, false);	// disables reflection at the shader
-	
 	var modelMatrix     = mat4.create();
 	
+	//	SKY
+	gl.uniform1i(program.reflectionIndex, false);	// disables reflection at the shader
+	
+	// outer sky sphere
+	gl.uniform1i(program.depthIndex, 2);			// sets object depth
+	
 	mat4.identity(modelMatrix);
-	mat4.scale(modelMatrix, modelMatrix, [50, 50, 50]);
+	mat4.scale(modelMatrix, modelMatrix, [90, 90, 90]);
+	drawBackground(modelMatrix, exampleSphere, Background);			// Background is a neutral mat for rendering skies
+	
+	// inner sky sphere
+	gl.uniform1i(program.depthIndex, 1);			// sets object depth
+	
+	mat4.identity(modelMatrix);
+	mat4.scale(modelMatrix, modelMatrix, [40, 40, 40]);
 	mat4.rotateX(modelMatrix, modelMatrix, Math.getRadians(180));	// I want it to start showing the opposite side
-	drawBackground(modelMatrix, exampleSphere, Background);				// Background is a neutral mat for rendering skies
+	drawBackground(modelMatrix, exampleSphere, Background);			// Background is a neutral mat for rendering skies
 
     //	OBJECT
 	gl.uniform1i(program.reflectionIndex, true);	// enables reflection at the shader
+	gl.uniform1i(program.depthIndex, 0);			// sets object depth
 	
 	mat4.identity(modelMatrix);
 	
@@ -426,6 +466,14 @@ function drawScene() {
 				
 			}
 		}
+		
+	}
+	
+	if (play)	{
+		
+		aa+=a; if(aa > 360) { aa = 0; }
+		bb+=b; if(bb > 360) { bb = 0; }
+		requestAnimationFrame(drawScene);
 		
 	}
 	
@@ -524,7 +572,7 @@ function initHandlers() {
 			lastMouseX = newX
 			lastMouseY = newY;
 	  
-			requestAnimationFrame(drawScene);
+			if (!play) { requestAnimationFrame(drawScene); }
 			
 		},
 		
@@ -538,15 +586,107 @@ function initHandlers() {
 			switch (event.keyCode)	{
 				
 				// iterates through shaders
-				case  67:
+				// *LOCKED*
+				//case  67:
 				
-					shadingMode++;
+					//shadingMode++;
 					
-					if(shadingMode > 2) {shadingMode = 0};
+					//if(shadingMode > 2) {shadingMode = 0};
 				
-					gl = getWebGLContext();
-					initShaders();
-					initRendering();
+					//gl = getWebGLContext();
+					//initShaders();
+					//initRendering();
+					
+					//break;
+					
+				case  80:		// turn ON/OFF movie
+					
+					if (play)	{
+						
+						play = false;
+						
+					}	else	{
+						
+						play = true;
+						requestAnimationFrame(drawScene);
+						
+					}
+					
+					break;
+					
+				case  77:		// material switch
+					
+					switch (mat)	{
+						
+						case Brass:
+							
+							mat = Bronze;			break;
+							
+						case Bronze:
+							
+							mat = Polished_bronze;	break;
+							
+						case Polished_bronze:
+							
+							mat = Chrome;			break;
+							
+						case Chrome:
+							
+							mat = Copper;			break;
+							
+						case Copper:
+							
+							mat = Polished_copper;	break;
+							
+						case Polished_copper:
+							
+							mat = Gold;				break;
+							
+						case Gold:
+							
+							mat = Polished_gold;	break;
+							
+						case Polished_gold:
+							
+							mat = Tin;				break;
+							
+						case Tin:
+							
+							mat = Silver;			break;
+							
+						case Silver:
+							
+							mat = Polished_silver;	break;
+							
+						case Polished_silver:
+							
+							mat = Esmerald;			break;
+							
+						case Esmerald:
+							
+							mat = Jade;				break;
+							
+						case Jade:
+							
+							mat = Obsidian;			break;
+							
+						case Obsidian:
+							
+							mat = Perl;				break;
+							
+						case Perl:
+							
+							mat = Ruby;				break;
+							
+						case Ruby:
+							
+							mat = Turquoise;		break;
+							
+						case Turquoise:
+							
+							mat = Brass;			break;
+							
+					}
 					
 					break;
 				
@@ -572,7 +712,7 @@ function initHandlers() {
 					
 				}
 				
-				drawScene();
+				if (!play) { requestAnimationFrame(drawScene); }
 				
 		},
 		
@@ -591,10 +731,15 @@ function initWebGL() {
 		return;
 		
 	}
-
+	
 	initShaders();
+	
+	var innerBackground;
+	setTexture('innerTexture', innerBackground, innerBackgroundImage, 0);
+	var outerBackground;
+	setTexture('outerTexture', outerBackground, outerBackgroundImage, 1);
+	
 	initPrimitives();
-	setTexture(image);
 	initRendering();
 	initHandlers();
 	
