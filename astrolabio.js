@@ -14,8 +14,11 @@ var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 var mat 		= Chrome;
 var shadingMode	= 0;
 
-var image = new Image();
-image.src = "maps/eve_sky.png";
+var innerBackgroundImage = new Image();
+innerBackgroundImage.src = "maps/eve_sky.png";
+
+var outerBackgroundImage = new Image();
+outerBackgroundImage.src = "maps/starlight_sky.png";
 
 function getWebGLContext() {
     
@@ -234,7 +237,7 @@ function setShaderLight()	{	// this must be modified to allow current colors to 
 }
 
 // CARGA TEXTURA
-function setTexture (image)	{
+function setTexture(tag, image, unit)	{
 	
 	// creación de la textura
 	var texture = gl.createTexture();
@@ -244,7 +247,7 @@ function setTexture (image)	{
 	// (set maps are always power of 2 so I don't need to check it)
 	
 	// datos de la textura
-	gl.texImage2D (gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
 	
 	// parámetros de filtrado
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -262,10 +265,10 @@ function setTexture (image)	{
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 	
 	// se obtiene la referencia a la variable de tipo sampler2D en el shader
-	program.textureIndex = gl.getUniformLocation(program, 'myTexture');
+	program.textureIndex = gl.getUniformLocation(program, tag);
 	
 	// se asocia la variable de tipo sampler2D a una unidad de textura
-	gl.uniform1i(program.textureIndex, 0);
+	gl.uniform1i(program.textureIndex, unit);
 	
 }
 
@@ -591,10 +594,11 @@ function initWebGL() {
 		return;
 		
 	}
-
+	
 	initShaders();
+	setTexture('innerTexture', innerBackgroundImage, 0);
+	//setTexture('outerTexture', outerBackgroundImage, 1);
 	initPrimitives();
-	setTexture(image);
 	initRendering();
 	initHandlers();
 	
