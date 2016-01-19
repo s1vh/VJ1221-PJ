@@ -91,8 +91,8 @@ function initShaders()	{
 	// coordenadas de textura
 	program.vertexTexcoordsAttribute = gl.getAttribLocation ( program, "VertexTexcoords");
 	gl.enableVertexAttribArray(program.vertexTexcoordsAttribute);
-	program.repetition               = gl.getUniformLocation( program, "repetition");
-	gl.uniform1f(program.repetition, 1.0);
+	//program.repetition               = gl.getUniformLocation( program, "repetition");
+	//gl.uniform1f(program.repetition, 1.0);
 	
 	program.reflectionIndex		= gl.getUniformLocation( program, "reflection");
 	
@@ -242,12 +242,12 @@ function setTexture(tag, name, image, unit)	{
 	// creación de la textura
 	name = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, name);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 	
 	// (set maps are always power of 2 so I don't need to check it)
 	
 	// datos de la textura
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+	gl.texImage2D(gl.TEXTURE_2D, false, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
 	
 	// parámetros de filtrado
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -262,15 +262,15 @@ function setTexture(tag, name, image, unit)	{
 	
 	// se activa la unidad cero y se le asigna el objeto textura
 	//gl.activeTexture(gl.TEXTURE0);
-	switch(unit)	{
+	//switch(unit)	{
 		
-		case 0:
-			gl.activeTexture(gl.TEXTURE0); break;
+		//case 0:
+			//gl.activeTexture(gl.TEXTURE0); break;
 			
-		case 1:
-			gl.activeTexture(gl.TEXTURE1); break;
+		//case 1:
+			//gl.activeTexture(gl.TEXTURE1); break;
 			
-	}
+	//}
 	
 	gl.bindTexture(gl.TEXTURE_2D, name);
 	
@@ -608,8 +608,13 @@ function initWebGL() {
 	initShaders();
 	
 	var innerBackground;
+	gl.activeTexture(gl.TEXTURE0);
 	setTexture('innerTexture', innerBackground, innerBackgroundImage, 0);
-	//setTexture('outerTexture', outerBackgroundImage, 1);
+	
+	var outerBackground;
+	gl.activeTexture(gl.TEXTURE1);
+	setTexture('outerTexture', outerBackground, outerBackgroundImage, 1);
+	
 	initPrimitives();
 	initRendering();
 	initHandlers();
