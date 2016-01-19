@@ -13,7 +13,7 @@ Zoom and fovy ranges have been adjusted.
 
 Background uses two sphere maps with transparency in order to create a more realistic depth effect.
 
-For more detailed information, check annotations at source code.
+It is possible that you will need to refresh your browser until it gets to load the textures. For more detailed information, check annotations at source code.
 
   made by s1vh (al285854@uji.es)
   
