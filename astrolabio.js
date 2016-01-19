@@ -4,10 +4,12 @@ var myTorus;
 
 var orbs = 4; // I want to be able to change the number of orbits
 
-var  a = 0;	  // odd orbit angle increment
-var  b = 0;   // pair orbit angle increment
-var aa = 0;   // odd orbit angle
-var bb = 0;   // pair orbit angle
+var  a	 = 1;	  // odd orbit angle increment
+var  b	 = 1;   // pair orbit angle increment
+var aa	 = 0;   // odd orbit angle
+var bb	 = 0;   // pair orbit angle
+
+var play = true;
 
 var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 
@@ -459,6 +461,14 @@ function drawScene() {
 		
 	}
 	
+	if (play)	{
+		
+		aa+=a; if(aa > 360) { aa = 0; }
+		bb+=b; if(bb > 360) { bb = 0; }
+		requestAnimationFrame(drawScene);
+		
+	}
+	
 }
 
 //  Gets Radians from a given angle in degrees
@@ -554,7 +564,7 @@ function initHandlers() {
 			lastMouseX = newX
 			lastMouseY = newY;
 	  
-			requestAnimationFrame(drawScene);
+			if (!play) { requestAnimationFrame(drawScene); }
 			
 		},
 		
@@ -580,6 +590,21 @@ function initHandlers() {
 					//initRendering();
 					
 					//break;
+					
+				case  80:		// turn ON/OFF movie
+					
+					if (play)	{
+						
+						play = false;
+						
+					}	else	{
+						
+						play = true;
+						requestAnimationFrame(drawScene);
+						
+					}
+					
+					break;
 				
 				// orbit handlers (it will be mouse-wise on release)
 				case  38: { a+=0.1; aa+=a; break; }		// alfa up    (up arrow)
@@ -603,7 +628,7 @@ function initHandlers() {
 					
 				}
 				
-				drawScene();
+				if (!play) { requestAnimationFrame(drawScene); }
 				
 		},
 		
