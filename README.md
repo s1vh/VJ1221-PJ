@@ -21,5 +21,9 @@ python -m http.server 8000
 
 To open the project at http://localhost:8000/astrolabio.html in a compatible browser (WebGL 1).
 
+Also, a Python script has been added to run a local server that enforces MIME to maximize browser compatibility. To run it:
+
+python scripts/localServer.py
+
 	-made by s1vh (al285854@uji.es)
   
