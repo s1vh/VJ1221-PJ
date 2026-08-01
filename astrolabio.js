@@ -68,7 +68,7 @@ function initShaders()	{
 			break;
 			
 	}
-	
+		
 	gl.compileShader(vertexShader);
 	gl.compileShader(fragmentShader);
 	
@@ -109,6 +109,31 @@ function initShaders()	{
 	program.LdIndex               = gl.getUniformLocation( program, "Light.Ld");
 	program.LsIndex               = gl.getUniformLocation( program, "Light.Ls");
 	program.PositionIndex         = gl.getUniformLocation( program, "Light.Position");
+	
+	// COMPROBACIÓN DE SHADERS 	(me ayudará a trazar el problema para que no vuelva a quedarme con un canvas en negro durante 11 años... )
+	if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+		console.error(gl.getShaderInfoLog(vertexShader));
+		throw new Error(
+            "Vertex shader:\n" +
+            gl.getShaderInfoLog(vertexShader)
+		);
+	}
+
+	if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+		console.error(gl.getShaderInfoLog(fragmentShader));
+		throw new Error(
+            "Fragment shader:\n" +
+            gl.getShaderInfoLog(fragmentShader)
+        );
+	}
+
+	if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+		console.error(gl.getProgramInfoLog(program));
+		throw new Error(
+            "Shader program:\n" +
+            gl.getProgramInfoLog(program)
+        );
+	}
 	
 }
 
