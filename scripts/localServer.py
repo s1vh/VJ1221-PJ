@@ -12,7 +12,8 @@ ENTRY_POINT = "astrolabio.html"
 class Handler(SimpleHTTPRequestHandler):
     extensions_map = {
         **SimpleHTTPRequestHandler.extensions_map,
-        ".js": "text/javascript",
+        ".js": "text/javascript; charset=utf-8",
+        ".mjs": "text/javascript; charset=utf-8",
     }
 
 
