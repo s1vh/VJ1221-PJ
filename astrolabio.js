@@ -418,8 +418,16 @@ function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
 function rebuildTorusBuffers() {
 	
+	// vaciar buffers antiguos
+	for (var i = 0; i < orbitTorusArray.length; i++) {
+		gl.deleteBuffer(orbitTorusArray[i].idBufferVertices);
+		gl.deleteBuffer(orbitTorusArray[i].idBufferIndices);
+	}
+	
+	// reiniciar el array
 	orbitTorusArray = [];
 	
+	// reconstruir buffers
 	for (var i = 1; i <= orbs; i++) {
 		var orbitTorus = makeTorus(0.02 * i, 0.8 * i, 6, 48);
 		initBuffers(orbitTorus);
