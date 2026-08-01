@@ -16,11 +16,11 @@ var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 var mat 		= Chrome;
 var shadingMode	= 0;
 
-var innerBackgroundImage = new Image();
-innerBackgroundImage.src = "maps/eve_sky.png";
+var innerBackgroundImage;
+//innerBackgroundImage.src = "maps/eve_sky.png";
 
-var outerBackgroundImage = new Image();
-outerBackgroundImage.src = "maps/starlight_sky.png";
+var outerBackgroundImage;
+//outerBackgroundImage.src = "maps/starlight_sky.png";
 
 function getWebGLContext() {
     
@@ -247,53 +247,83 @@ function setShaderLight()	{	// this must be modified to allow current colors to 
 	
 }
 
-// CARGA TEXTURA
-function setTexture(tag, name, image, unit)	{
-	
-	// creación de la textura
-	name = gl.createTexture();
-	
-	// se marca como activa la unidad correspondiente
-	switch(unit)	{
-		
-		case 0:
-		
-			gl.activeTexture(gl.TEXTURE0); break;
-			
-		case 1:
-		
-			gl.activeTexture(gl.TEXTURE1); break;
-			
-	}
-	
-	gl.bindTexture(gl.TEXTURE_2D, name);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-	
-	// (set maps are always power of 2 so I don't need to check it)
-	
+// CARGA LAS TEXTURAS COMO IMAGE URL
+function loadImage(url) {
+    return new Promise(function(resolve, reject) {
+        var image = new Image();
+
+        image.onload = function() {
+            resolve(image);
+        };
+
+        image.onerror = function() {
+            reject(new Error("No se pudo cargar " + url));
+        };
+
+        image.src = url;
+    });
+}
+
+// ASIGNA LAS TEXTURAS PARA WEBGL
+function setTexture(tag, image, unit) {
+    var texture = gl.createTexture();
+
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+	// set maps are always power of 2 so I don't need to check it here (otherwise normalize under this line)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
 	// datos de la textura
-	gl.texImage2D(gl.TEXTURE_2D, false, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-	
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGB,
+        gl.RGB,
+        gl.UNSIGNED_BYTE,
+        image
+    );
+
 	// parámetros de filtrado
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MAG_FILTER,
+        gl.LINEAR
+    );
+
+	// parámetros de repetición (coordenadas de textura mayores a uno)
 	
-	// parámetros de repetición (ccordenadas de textura mayores a uno)
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
-	
+    gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MIN_FILTER,
+        gl.LINEAR_MIPMAP_LINEAR
+    );
+
+    gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_WRAP_S,
+        gl.MIRRORED_REPEAT
+    );
+
+    gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_WRAP_T,
+        gl.MIRRORED_REPEAT
+    );
+
 	// creación del mipmap
-	gl.generateMipmap(gl.TEXTURE_2D);
-	
+    gl.generateMipmap(gl.TEXTURE_2D);
+
 	// se asigna el objeto textura a la unidad activa
-	gl.bindTexture(gl.TEXTURE_2D, name);
-	
-	// se obtiene la referencia a la variable de tipo sampler2D en el shader
-	program.textureIndex = gl.getUniformLocation(program, tag);
-	
-	// se asocia la variable de tipo sampler2D a una unidad de textura
-	gl.uniform1i(program.textureIndex, unit);
-	
+    var location = gl.getUniformLocation(
+        program,
+        tag
+    );
+
+    gl.uniform1i(location, unit);
+
+	// devolvemos la referencia a la textura
+    return texture;
 }
 
 function drawSolid(model)	{
@@ -720,31 +750,42 @@ function initHandlers() {
 		
 }        
 
-function initWebGL() {
-    
-	gl = getWebGLContext();
-    
-	if (!gl) {
-		
-		alert("WebGL no está disponible");
-		
-		return;
-		
+// INICIALIZAR WEBGL
+async function initWebGL() {
+    gl = getWebGLContext();
+
+    if (!gl) {
+        alert("WebGL no está disponible");
+        return;
+    }
+
+    initShaders();
+    initPrimitives();
+    initRendering();
+    initHandlers();
+
+	try {
+		var images = await Promise.all([
+			loadImage("maps/eve_sky.png"),
+			loadImage("maps/starlight_sky.png")
+		]);
+
+		console.log(
+			"Texturas cargadas:",
+			images[0].naturalWidth,
+			images[0].naturalHeight,
+			images[1].naturalWidth,
+			images[1].naturalHeight
+		);
+
+		innerBackground = setTexture("innerTexture", images[0], 0);
+		outerBackground = setTexture("outerTexture", images[1], 1);
+
+		requestAnimationFrame(drawScene);
+
+	} catch (error) {
+		console.error("Error cargando texturas:", error);
 	}
-	
-	initShaders();
-	
-	var innerBackground;
-	setTexture('innerTexture', innerBackground, innerBackgroundImage, 0);
-	var outerBackground;
-	setTexture('outerTexture', outerBackground, outerBackgroundImage, 1);
-	
-	initPrimitives();
-	initRendering();
-	initHandlers();
-	
-	requestAnimationFrame(drawScene);
-	
 }
 
 initWebGL();
