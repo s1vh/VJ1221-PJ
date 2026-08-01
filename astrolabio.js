@@ -1,6 +1,7 @@
 
 var gl, program;
 var myTorus;
+var orbitTorusArray = [];
 
 var orbs = 4;	// I want to be able to change the number of orbits
 
@@ -415,6 +416,17 @@ function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
 }
 
+function rebuildTorusBuffers() {
+	
+	orbitTorusArray = [];
+	
+	for (var i = 1; i <= orbs; i++) {
+		var orbitTorus = makeTorus(0.02 * i, 0.8 * i, 6, 48);
+		initBuffers(orbitTorus);
+		orbitTorusArray.push(orbitTorus);
+	}
+}
+
 function drawScene() {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -448,8 +460,9 @@ function drawScene() {
 	//	ORBITS
 	for (var i = 1; i <= orbs; i++)  {
 		
-		orbitTorus = makeTorus(0.02*i, 0.8*i, 6, 48);
-		initBuffers(orbitTorus);	// got to init buffer on-the-loop for each torus to allow different orbits number
+		//orbitTorus = makeTorus(0.02*i, 0.8*i, 6, 48);
+		//initBuffers(orbitTorus);	// rebuild Torus buffers if the number or orbits has changed
+		//rebuildTorusBuffers();
 		
 		mat4.identity(modelMatrix);
 		
@@ -462,7 +475,7 @@ function drawScene() {
 		var rotationMatrix = mat4.clone(modelMatrix);
 		
 		mat4.scale(modelMatrix, modelMatrix, [1/orbs, 1/orbs, 1/i]); // normalize orbits
-		drawModel(modelMatrix, orbitTorus, mat);
+		drawModel(modelMatrix, orbitTorusArray[i-1], mat);
 		
 		// ORBS
 		mat4.copy(modelMatrix, rotationMatrix);
@@ -737,8 +750,8 @@ function initHandlers() {
 				case 101: { aa+=a;  bb+=b; break; }		// rotate forward (numpad 5)
 				case  96: { aa-=a;  bb-=b; break; }		// rotate backward (numpad 0)
 
-				case 107: { orbs++; break; }				// increases orbits   (add)
-				case 109: if (orbs > 1)	{ orbs--; break; }	// substracts orbits  (substract)
+				case 107: { orbs++; rebuildTorusBuffers(); break; }					// increases orbits   (add)
+				case 109: if (orbs > 1)	{ orbs--; rebuildTorusBuffers(); break; }	// substracts orbits  (substract)
 					
 				}
 				
@@ -761,6 +774,7 @@ async function initWebGL() {
 
     initShaders();
     initPrimitives();
+	rebuildTorusBuffers();
     initRendering();
     initHandlers();
 
