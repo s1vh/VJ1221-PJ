@@ -802,7 +802,7 @@ async function initWebGL() {
 
     initShaders();
     initPrimitives();
-	rebuildTorusBuffers();
+    rebuildTorusBuffers();
     initRendering();
     initHandlers();
 
