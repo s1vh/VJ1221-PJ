@@ -17,11 +17,8 @@ var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 var mat 		= Chrome;
 var shadingMode	= 0;
 
-var innerBackgroundImage;
-//innerBackgroundImage.src = "maps/eve_sky.png";
-
-var outerBackgroundImage;
-//outerBackgroundImage.src = "maps/starlight_sky.png";
+var innerBackground;
+var outerBackground;
 
 function getWebGLContext() {
     
@@ -485,11 +482,7 @@ function drawScene() {
 	
 	//	ORBITS
 	for (var i = 1; i <= orbs; i++)  {
-		
-		//orbitTorus = makeTorus(0.02*i, 0.8*i, 6, 48);
-		//initBuffers(orbitTorus);	// rebuild Torus buffers if the number or orbits has changed
-		//rebuildTorusBuffers();
-		
+				
 		mat4.identity(modelMatrix);
 		
 		// --rotation begins here--
