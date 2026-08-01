@@ -17,11 +17,8 @@ var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 var mat 		= Chrome;
 var shadingMode	= 0;
 
-var innerBackgroundImage;
-//innerBackgroundImage.src = "maps/eve_sky.png";
-
-var outerBackgroundImage;
-//outerBackgroundImage.src = "maps/starlight_sky.png";
+var innerBackground;
+var outerBackground;
 
 function getWebGLContext() {
     
@@ -68,7 +65,7 @@ function initShaders()	{
 			break;
 			
 	}
-	
+		
 	gl.compileShader(vertexShader);
 	gl.compileShader(fragmentShader);
 	
@@ -109,6 +106,31 @@ function initShaders()	{
 	program.LdIndex               = gl.getUniformLocation( program, "Light.Ld");
 	program.LsIndex               = gl.getUniformLocation( program, "Light.Ls");
 	program.PositionIndex         = gl.getUniformLocation( program, "Light.Position");
+	
+	// COMPROBACIÓN DE SHADERS 	(me ayudará a trazar el problema para que no vuelva a quedarme con un canvas en negro durante 11 años... )
+	if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+		console.error(gl.getShaderInfoLog(vertexShader));
+		throw new Error(
+            "Vertex shader:\n" +
+            gl.getShaderInfoLog(vertexShader)
+		);
+	}
+
+	if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+		console.error(gl.getShaderInfoLog(fragmentShader));
+		throw new Error(
+            "Fragment shader:\n" +
+            gl.getShaderInfoLog(fragmentShader)
+        );
+	}
+
+	if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+		console.error(gl.getProgramInfoLog(program));
+		throw new Error(
+            "Shader program:\n" +
+            gl.getProgramInfoLog(program)
+        );
+	}
 	
 }
 
@@ -460,11 +482,7 @@ function drawScene() {
 	
 	//	ORBITS
 	for (var i = 1; i <= orbs; i++)  {
-		
-		//orbitTorus = makeTorus(0.02*i, 0.8*i, 6, 48);
-		//initBuffers(orbitTorus);	// rebuild Torus buffers if the number or orbits has changed
-		//rebuildTorusBuffers();
-		
+				
 		mat4.identity(modelMatrix);
 		
 		// --rotation begins here--
@@ -622,6 +640,15 @@ function initHandlers() {
 		
 		false);
 	
+	// CONTEXT MANAGEMENT
+	canvas.addEventListener("webglcontextlost", function (event) {
+		event.preventDefault();
+	});
+
+	canvas.addEventListener("webglcontextrestored", function () {
+		initWebGL();
+	});
+	
 	// KEYBOARD EVENTS
 	document.addEventListener("keydown",
 	
@@ -775,7 +802,7 @@ async function initWebGL() {
 
     initShaders();
     initPrimitives();
-	  rebuildTorusBuffers();
+    rebuildTorusBuffers();
     initRendering();
     initHandlers();
 
