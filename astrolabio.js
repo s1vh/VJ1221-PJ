@@ -640,6 +640,15 @@ function initHandlers() {
 		
 		false);
 	
+	// CONTEXT MANAGEMENT
+	canvas.addEventListener("webglcontextlost", function (event) {
+		event.preventDefault();
+	});
+
+	canvas.addEventListener("webglcontextrestored", function () {
+		initWebGL();
+	});
+	
 	// KEYBOARD EVENTS
 	document.addEventListener("keydown",
 	
