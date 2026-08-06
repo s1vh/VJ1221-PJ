@@ -14,7 +14,29 @@ var play = true;
 
 var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 
-var mat 		= Chrome;
+var materials = [
+	Brass,
+	Bronze,
+	Polished_bronze,
+	Chrome,
+	Copper,
+	Polished_copper,
+	Gold,
+	Polished_gold,
+	Tin,
+	Silver,
+	Polished_silver,
+	Esmerald,
+	Jade,
+	Obsidian,
+	Perl,
+	Ruby,
+	Turquoise
+];
+
+var materialIndex = materials.indexOf(Chrome);	// material inicial ("Chrome" en la versión legacy)
+var mat = materials[materialIndex];
+
 var shadingMode	= 0;
 
 var innerBackground;
@@ -348,7 +370,6 @@ function drawSolid(model)	{
 	gl.vertexAttribPointer (program.vertexPositionAttribute,  3, gl.FLOAT, false, 8*4,   0);
 	gl.vertexAttribPointer (program.vertexNormalAttribute,    3, gl.FLOAT, false, 8*4, 3*4);
 	gl.vertexAttribPointer (program.vertexTexcoordsAttribute, 2, gl.FLOAT, false, 8*4, 6*4);
-	
 	gl.bindBuffer   (gl.ELEMENT_ARRAY_BUFFER, model.idBufferIndices);
 	gl.drawElements (gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
 	
@@ -660,24 +681,24 @@ function initHandlers() {
 				
 				case  "KeyM": { materialSwitch(); break; }
 				
-				// orbit handlers (by pair and odd orbits)
+				// orbit handlers (by even and odd orbits starting to count from the most outer orbit)
 				
-				case "ArrowUp": { alphaUp(); break; }
-				case "Numpad8": { alphaUp(); break; }
+				case "ArrowUp": { oddOrbitUp(); break; }
+				case "Numpad8": { oddOrbitUp(); break; }
 
-				case "ArrowDown": { alphaDown(); break; }
-				case "Numpad2": { alphaDown(); break; }
+				case "ArrowDown": { oddOrbitDown(); break; }
+				case "Numpad2": { oddOrbitDown(); break; }
 
-				case "ArrowRight": { betaUp(); break; }
-				case "Numpad6": { betaUp(); break; }
+				case "ArrowRight": { evenOrbitUp(); break; }
+				case "Numpad6": { evenOrbitUp(); break; }
 
-				case "ArrowLeft": { betaDown(); break; }
-				case "Numpad4": { betaDown(); break; }
+				case "ArrowLeft": { evenOrbitDown(); break; }
+				case "Numpad4": { evenOrbitDown(); break; }
 
-				case "Space": { rotateForward(); break;	}
-				case "Numpad5": { rotateForward(); break; }
+				case "Space": { manualForward(); break;	}
+				case "Numpad5": { manualForward(); break; }
 				
-				case "Numpad0": { rotateBackward(); break; }
+				case "Numpad0": { manualBackward(); break; }
 
 				case "NumpadAdd": { increaseOrbits(); break; }
 				
@@ -685,7 +706,7 @@ function initHandlers() {
 					
 			}
 				
-			if (!play) { requestAnimationFrame(drawScene); }
+			//if (!play) { requestAnimationFrame(drawScene); }
 				
 		}, false);
 }
@@ -706,125 +727,81 @@ function pause() {
 
 // material switch
 function materialSwitch() {
-	
-	switch (mat) {
-			
-		case Brass:
-			mat = Bronze;
-			break;
-							
-		case Bronze:
-			mat = Polished_bronze;
-			break;
-		
-		case Polished_bronze:
-			mat = Chrome;
-			break;
-		
-		case Chrome:
-			mat = Copper;
-			break;
-		
-		case Copper:			
-			mat = Polished_copper;
-			break;
-		
-		case Polished_copper:
-			mat = Gold;
-			break;
-		
-		case Gold:
-			mat = Polished_gold;
-			break;
-		
-		case Polished_gold:
-			mat = Tin;
-			break;
-		
-		case Tin:
-			mat = Silver;
-			break;
-		
-		case Silver:
-			mat = Polished_silver;
-			break;
-		
-		case Polished_silver:
-			mat = Esmerald;
-			break;
-		
-		case Esmerald:
-			mat = Jade;
-			break;
-		
-		case Jade:
-			mat = Obsidian;
-			break;
-		
-		case Obsidian:
-			mat = Perl;
-			break;
-		
-		case Perl:
-			mat = Ruby;
-			break;
-		
-		case Ruby:
-			mat = Turquoise;
-			break;
-		
-		case Turquoise:
-			mat = Brass;
-			break;
-							
-		}
+	materialIndex = (materialIndex + 1) % materials.length;
+	mat = materials[materialIndex];
+	drawIfPaused();
 }
 
-// alfa up
-function alphaUp() {
+// material navigator
+function changeMaterial(direction) {
+	materialIndex = (materialIndex + direction + materials.length) % materials.length;
+	mat = materials[materialIndex];
+	drawIfPaused();
+}
+
+// odd orbits (starting from outer layers) move forward/speed up
+function oddOrbitUp() {
 	a+=0.1;
 	aa+=a;
+	drawIfPaused()
 }
 
-// alfa down
-function alphaDown() {
+// odd orbits (starting from outer layers) move backward/speed down
+function oddOrbitDown() {
 	a-=0.1;
 	aa-=a;
+	drawIfPaused()
 }
 
-// beta up
-function betaUp() {
+// even orbits (starting from outer layers) move forward/speed up
+function evenOrbitUp() {
 	b+=0.1;
 	bb+=b;
+	drawIfPaused()
 }
 
-// beta down
-function betaDown() {
+// even orbits (starting from outer layers) move backward/speed down
+function evenOrbitDown() {
 	b-=0.1;
 	bb-=b;
+	drawIfPaused()
 }
 
-// rotate forward
-function rotateForward() {
-	aa+=a;
-	bb+=b;
+// moves the orbits forwards at a fix rate only when paused (manual mode)
+function manualForward() {
+	if (!play) {
+		aa+=a;
+		bb+=b;
+		requestAnimationFrame(drawScene);
+	}
 }
 
-// rotate backward
-function rotateBackward() {
-	aa-=a;
-	bb-=b;
+// moves the orbits backwards at a fix rate only when paused (manual mode)
+function manualBackward() {
+	if (!play) {
+		aa-=a;
+		bb-=b;
+		requestAnimationFrame(drawScene);
+	}
 }
 
 // increases orbits (addition)
 function increaseOrbits() {
 	orbs++;
 	rebuildTorusBuffers();
+	drawIfPaused();
 }
 
 // subtracts orbits  (subtraction)
 function subtractOrbits() {
-	if (orbs > 1) { orbs--; rebuildTorusBuffers(); }
+	if (orbs > 1) { orbs--; rebuildTorusBuffers(); drawIfPaused(); }
+}
+
+// updates the scene if it is paused so it reflects the changes
+function drawIfPaused() {
+	if (!play) {
+		requestAnimationFrame(drawScene);
+	}
 }
 
 // --- TERMINA BLOQUE DE FUNCIONES AUXILIARES ---
