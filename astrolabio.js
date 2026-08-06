@@ -656,140 +656,178 @@ function initHandlers() {
 		
 			switch (event.code)	{
 				
-				// iterates through shaders
-				// *LOCKED*
-				//case  67:
+				case  "KeyP": { pause(); break; }
 				
-					//shadingMode++;
-					
-					//if(shadingMode > 2) {shadingMode = 0};
+				case  "KeyM": { materialSwitch(); break; }
 				
-					//gl = getWebGLContext();
-					//initShaders();
-					//initRendering();
-					
-					//break;
-					
-				case  "KeyP":	// turn ON/OFF movie
-					
-					if (play)	{
-						
-						play = false;
-						
-					}	else	{
-						
-						play = true;
-						requestAnimationFrame(drawScene);
-						
-					}
-					
-					break;
-					
-				case  "KeyM":	// material switch
-					
-					switch (mat)	{
-						
-						case Brass:
-							
-							mat = Bronze;			break;
-							
-						case Bronze:
-							
-							mat = Polished_bronze;	break;
-							
-						case Polished_bronze:
-							
-							mat = Chrome;			break;
-							
-						case Chrome:
-							
-							mat = Copper;			break;
-							
-						case Copper:
-							
-							mat = Polished_copper;	break;
-							
-						case Polished_copper:
-							
-							mat = Gold;				break;
-							
-						case Gold:
-							
-							mat = Polished_gold;	break;
-							
-						case Polished_gold:
-							
-							mat = Tin;				break;
-							
-						case Tin:
-							
-							mat = Silver;			break;
-							
-						case Silver:
-							
-							mat = Polished_silver;	break;
-							
-						case Polished_silver:
-							
-							mat = Esmerald;			break;
-							
-						case Esmerald:
-							
-							mat = Jade;				break;
-							
-						case Jade:
-							
-							mat = Obsidian;			break;
-							
-						case Obsidian:
-							
-							mat = Perl;				break;
-							
-						case Perl:
-							
-							mat = Ruby;				break;
-							
-						case Ruby:
-							
-							mat = Turquoise;		break;
-							
-						case Turquoise:
-							
-							mat = Brass;			break;
-							
-					}
-					
-					break;
+				// orbit handlers (by pair and odd orbits)
 				
-				// orbit handlers (it will be mouse-wise on release)
-				case "ArrowUp": { a+=0.1; aa+=a; break; }		// alfa up    (up arrow)
-				case "Numpad8": { a+=0.1; aa+=a; break; }		// alfa up    (numpad 8)
+				case "ArrowUp": { alphaUp(); break; }
+				case "Numpad8": { alphaUp(); break; }
 
-				case "ArrowDown": { a-=0.1; aa-=a; break; }		// alfa down  (down arrow)
-				case "Numpad2": { a-=0.1; aa-=a; break; }		// alfa down  (numpad 2)
+				case "ArrowDown": { alphaDown(); break; }
+				case "Numpad2": { alphaDown(); break; }
 
-				case "ArrowRight": { b+=0.1; bb+=b; break; }	// beta up    (right arrow)
-				case "Numpad6": { b+=0.1; bb+=b; break; }		// beta up    (numpad 6)
+				case "ArrowRight": { betaUp(); break; }
+				case "Numpad6": { betaUp(); break; }
 
-				case "ArrowLeft": { b-=0.1; bb-=b; break; }		// beta down  (left arrow)
-				case "Numpad4": { b-=0.1; bb-=b; break; }		// beta down  (numpad 4)
+				case "ArrowLeft": { betaDown(); break; }
+				case "Numpad4": { betaDown(); break; }
 
-				case "Space": { aa+=a;  bb+=b; break;	}		// rotate forward (spacebar)
-				case "Numpad5": { aa+=a;  bb+=b; break; }		// rotate forward (numpad 5)
-				case "Numpad0": { aa-=a;  bb-=b; break; }		// rotate backward (numpad 0)
+				case "Space": { rotateForward(); break;	}
+				case "Numpad5": { rotateForward(); break; }
+				
+				case "Numpad0": { rotateBackward(); break; }
 
-				case "NumpadAdd": { orbs++; rebuildTorusBuffers(); break; }							// increases orbits   (add)
-				case "NumpadSubtract": if (orbs > 1)	{ orbs--; rebuildTorusBuffers(); break; }	// substracts orbits  (substract)
+				case "NumpadAdd": { increaseOrbits(); break; }
+				
+				case "NumpadSubtract": { subtractOrbits(); break; }
 					
-				}
+			}
 				
-				if (!play) { requestAnimationFrame(drawScene); }
+			if (!play) { requestAnimationFrame(drawScene); }
 				
-		},
+		}, false);
+}
+
+// --- BLOQUE DE FUNCIONES AUXILIARES DE CONTROL E INTERACCIÓN ---
+
+// turn ON/OFF movie
+function pause() {
+	
+	if (play) {
+		play = false;
+		} else {
+			play = true;
+			requestAnimationFrame(drawScene);
+		}
 		
-		false);
+}
+
+// material switch
+function materialSwitch() {
+	
+	switch (mat) {
+			
+		case Brass:
+			mat = Bronze;
+			break;
+							
+		case Bronze:
+			mat = Polished_bronze;
+			break;
 		
-}        
+		case Polished_bronze:
+			mat = Chrome;
+			break;
+		
+		case Chrome:
+			mat = Copper;
+			break;
+		
+		case Copper:			
+			mat = Polished_copper;
+			break;
+		
+		case Polished_copper:
+			mat = Gold;
+			break;
+		
+		case Gold:
+			mat = Polished_gold;
+			break;
+		
+		case Polished_gold:
+			mat = Tin;
+			break;
+		
+		case Tin:
+			mat = Silver;
+			break;
+		
+		case Silver:
+			mat = Polished_silver;
+			break;
+		
+		case Polished_silver:
+			mat = Esmerald;
+			break;
+		
+		case Esmerald:
+			mat = Jade;
+			break;
+		
+		case Jade:
+			mat = Obsidian;
+			break;
+		
+		case Obsidian:
+			mat = Perl;
+			break;
+		
+		case Perl:
+			mat = Ruby;
+			break;
+		
+		case Ruby:
+			mat = Turquoise;
+			break;
+		
+		case Turquoise:
+			mat = Brass;
+			break;
+							
+		}
+}
+
+// alfa up
+function alphaUp() {
+	a+=0.1;
+	aa+=a;
+}
+
+// alfa down
+function alphaDown() {
+	a-=0.1;
+	aa-=a;
+}
+
+// beta up
+function betaUp() {
+	b+=0.1;
+	bb+=b;
+}
+
+// beta down
+function betaDown() {
+	b-=0.1;
+	bb-=b;
+}
+
+// rotate forward
+function rotateForward() {
+	aa+=a;
+	bb+=b;
+}
+
+// rotate backward
+function rotateBackward() {
+	aa-=a;
+	bb-=b;
+}
+
+// increases orbits (addition)
+function increaseOrbits() {
+	orbs++;
+	rebuildTorusBuffers();
+}
+
+// subtracts orbits  (subtraction)
+function subtractOrbits() {
+	if (orbs > 1) { orbs--; rebuildTorusBuffers(); }
+}
+
+// --- TERMINA BLOQUE DE FUNCIONES AUXILIARES ---
 
 // INICIALIZAR WEBGL
 async function initWebGL() {
