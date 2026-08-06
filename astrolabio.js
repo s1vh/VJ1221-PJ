@@ -11,10 +11,33 @@ var aa	 = 0;   // odd orbit angle
 var bb	 = 0;   // pair orbit angle
 
 var play = true;
+var contextLost = false;	// prevents to request new frames if WebGL context has been lost
 
 var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 
-var mat 		= Chrome;
+var materials = [
+	Brass,
+	Bronze,
+	Polished_bronze,
+	Chrome,
+	Copper,
+	Polished_copper,
+	Gold,
+	Polished_gold,
+	Tin,
+	Silver,
+	Polished_silver,
+	Esmerald,
+	Jade,
+	Obsidian,
+	Perl,
+	Ruby,
+	Turquoise
+];
+
+var materialIndex = materials.indexOf(Chrome);	// material inicial ("Chrome" en la versión legacy)
+var mat = materials[materialIndex];
+
 var shadingMode	= 0;
 
 var innerBackground;
@@ -348,7 +371,6 @@ function drawSolid(model)	{
 	gl.vertexAttribPointer (program.vertexPositionAttribute,  3, gl.FLOAT, false, 8*4,   0);
 	gl.vertexAttribPointer (program.vertexNormalAttribute,    3, gl.FLOAT, false, 8*4, 3*4);
 	gl.vertexAttribPointer (program.vertexTexcoordsAttribute, 2, gl.FLOAT, false, 8*4, 6*4);
-	
 	gl.bindBuffer   (gl.ELEMENT_ARRAY_BUFFER, model.idBufferIndices);
 	gl.drawElements (gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
 	
@@ -431,18 +453,19 @@ function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
 }
 
-function rebuildTorusBuffers() {
+// vaciar buffers antiguos
+function deleteTorusBuffers() {
 	
-	// vaciar buffers antiguos
 	for (var i = 0; i < orbitTorusArray.length; i++) {
 		gl.deleteBuffer(orbitTorusArray[i].idBufferVertices);
 		gl.deleteBuffer(orbitTorusArray[i].idBufferIndices);
 	}
+}
+
+// reiniciar el array y reconstruir buffers
+function createTorusBuffers() {
 	
-	// reiniciar el array
 	orbitTorusArray = [];
-	
-	// reconstruir buffers
 	for (var i = 1; i <= orbs; i++) {
 		var orbitTorus = makeTorus(0.02 * i, 0.8 * i, 6, 48);
 		initBuffers(orbitTorus);
@@ -450,7 +473,14 @@ function rebuildTorusBuffers() {
 	}
 }
 
+function rebuildTorusBuffers() {
+	deleteTorusBuffers();
+	createTorusBuffers();
+}
+
 function drawScene() {
+	
+	if (contextLost) { return; }	// vuelve sin hacer nada si se ha perdido el contexto WebGL
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
@@ -531,7 +561,7 @@ function drawScene() {
 		
 	}
 	
-	if (play)	{
+	if (play && !contextLost)	{
 		
 		aa+=a; if(aa > 360) { aa = 0; }
 		bb+=b; if(bb > 360) { bb = 0; }
@@ -643,10 +673,21 @@ function initHandlers() {
 	// CONTEXT MANAGEMENT
 	canvas.addEventListener("webglcontextlost", function (event) {
 		event.preventDefault();
+		contextLost = true;
 	});
 
-	canvas.addEventListener("webglcontextrestored", function () {
-		initWebGL();
+	canvas.addEventListener("webglcontextrestored", async function () {
+		try {
+			await initWebGLResources();
+			contextLost = false;
+			requestAnimationFrame(drawScene);
+		} catch (error) {
+			contextLost = true;
+			console.error(
+				"Error restaurando WebGL:",
+				error
+			);
+		}
 	});
 	
 	// KEYBOARD EVENTS
@@ -654,180 +695,182 @@ function initHandlers() {
 	
 		function(event) {
 		
-			switch (event.keyCode)	{
+			switch (event.code)	{
 				
-				// iterates through shaders
-				// *LOCKED*
-				//case  67:
+				case  "KeyP": { if (!event.repeat) { pause(); } break; }
 				
-					//shadingMode++;
-					
-					//if(shadingMode > 2) {shadingMode = 0};
+				case  "KeyM": { if (!event.repeat) { materialSwitch(); } break; }
 				
-					//gl = getWebGLContext();
-					//initShaders();
-					//initRendering();
-					
-					//break;
-					
-				case  80:		// turn ON/OFF movie
-					
-					if (play)	{
-						
-						play = false;
-						
-					}	else	{
-						
-						play = true;
-						requestAnimationFrame(drawScene);
-						
-					}
-					
-					break;
-					
-				case  77:		// material switch
-					
-					switch (mat)	{
-						
-						case Brass:
-							
-							mat = Bronze;			break;
-							
-						case Bronze:
-							
-							mat = Polished_bronze;	break;
-							
-						case Polished_bronze:
-							
-							mat = Chrome;			break;
-							
-						case Chrome:
-							
-							mat = Copper;			break;
-							
-						case Copper:
-							
-							mat = Polished_copper;	break;
-							
-						case Polished_copper:
-							
-							mat = Gold;				break;
-							
-						case Gold:
-							
-							mat = Polished_gold;	break;
-							
-						case Polished_gold:
-							
-							mat = Tin;				break;
-							
-						case Tin:
-							
-							mat = Silver;			break;
-							
-						case Silver:
-							
-							mat = Polished_silver;	break;
-							
-						case Polished_silver:
-							
-							mat = Esmerald;			break;
-							
-						case Esmerald:
-							
-							mat = Jade;				break;
-							
-						case Jade:
-							
-							mat = Obsidian;			break;
-							
-						case Obsidian:
-							
-							mat = Perl;				break;
-							
-						case Perl:
-							
-							mat = Ruby;				break;
-							
-						case Ruby:
-							
-							mat = Turquoise;		break;
-							
-						case Turquoise:
-							
-							mat = Brass;			break;
-							
-					}
-					
-					break;
+				// orbit handlers (by even and odd orbits starting to count from the most outer orbit)
 				
-				// orbit handlers (it will be mouse-wise on release)
-				case  38: { a+=0.1; aa+=a; break; }		// alfa up    (up arrow)
-				case 104: { a+=0.1; aa+=a; break; }		// alfa up    (numpad 8)
+				case "ArrowUp": { increaseOddOrbitSpeed(); break; }
+				case "Numpad8": { increaseOddOrbitSpeed(); break; }
 
-				case  40: { a-=0.1; aa-=a; break; }		// alfa down  (down arrow)
-				case  98: { a-=0.1; aa-=a; break; }		// alfa down  (numpad 2)
+				case "ArrowDown": { decreaseOddOrbitSpeed(); break; }
+				case "Numpad2": { decreaseOddOrbitSpeed(); break; }
 
-				case  39: { b+=0.1; bb+=b; break; }		// beta up    (right arrow)
-				case 102: { b+=0.1; bb+=b; break; }		// beta up    (numpad 6)
+				case "ArrowRight": { increaseEvenOrbitSpeed(); break; }
+				case "Numpad6": { increaseEvenOrbitSpeed(); break; }
 
-				case  37: { b-=0.1; bb-=b; break; }		// beta down  (left arrow)
-				case 100: { b-=0.1; bb-=b; break; }		// beta down  (numpad 4)
+				case "ArrowLeft": { decreaseEvenOrbitSpeed(); break; }
+				case "Numpad4": { decreaseEvenOrbitSpeed(); break; }
 
-				case  32: { aa+=a;  bb+=b; break;	}	// rotate forward (spacebar)
-				case 101: { aa+=a;  bb+=b; break; }		// rotate forward (numpad 5)
-				case  96: { aa-=a;  bb-=b; break; }		// rotate backward (numpad 0)
+				case "Space": { manualForward(); break;	}
+				case "Numpad5": { manualForward(); break; }
+				
+				case "Numpad0": { manualBackward(); break; }
 
-				case 107: { orbs++; rebuildTorusBuffers(); break; }					// increases orbits   (add)
-				case 109: if (orbs > 1)	{ orbs--; rebuildTorusBuffers(); break; }	// substracts orbits  (substract)
+				case "NumpadAdd": { increaseOrbits(); break; }
+				
+				case "NumpadSubtract": { subtractOrbits(); break; }
 					
-				}
-				
-				if (!play) { requestAnimationFrame(drawScene); }
-				
-		},
+			}
+		}, false);
+}
+
+// --- BLOQUE DE FUNCIONES AUXILIARES DE CONTROL E INTERACCIÓN ---
+
+// turn ON/OFF movie
+function pause() {
+	
+	if (play) {
+		play = false;
+		} else {
+			play = true;
+			requestAnimationFrame(drawScene);
+		}
 		
-		false);
-		
-}        
+}
 
-// INICIALIZAR WEBGL
-async function initWebGL() {
-    gl = getWebGLContext();
+// material switch (legacy)
+function materialSwitch() {
+	changeMaterial(1);
+}
 
-    if (!gl) {
-        alert("WebGL no está disponible");
-        return;
-    }
+// material navigator
+function changeMaterial(direction) {
+	materialIndex = (materialIndex + direction + materials.length) % materials.length;
+	mat = materials[materialIndex];
+	drawIfPaused();
+}
 
-    initShaders();
-    initPrimitives();
-    rebuildTorusBuffers();
-    initRendering();
-    initHandlers();
+// odd orbits (starting from outer layers) move forward/speed up
+function increaseOddOrbitSpeed() {
+	a+=0.1;
+	aa+=a;
+	drawIfPaused()
+}
 
-	try {
-		var images = await Promise.all([
-			loadImage("maps/eve_sky.png"),
-			loadImage("maps/starlight_sky.png")
-		]);
+// odd orbits (starting from outer layers) move backward/speed down
+function decreaseOddOrbitSpeed() {
+	a-=0.1;
+	aa-=a;
+	drawIfPaused()
+}
 
-		console.log(
+// even orbits (starting from outer layers) move forward/speed up
+function increaseEvenOrbitSpeed() {
+	b+=0.1;
+	bb+=b;
+	drawIfPaused()
+}
+
+// even orbits (starting from outer layers) move backward/speed down
+function decreaseEvenOrbitSpeed() {
+	b-=0.1;
+	bb-=b;
+	drawIfPaused()
+}
+
+// moves the orbits forwards at a fix rate only when paused (manual mode)
+function manualForward() {
+	if (!play) {
+		aa+=a;
+		bb+=b;
+		requestAnimationFrame(drawScene);
+	}
+}
+
+// moves the orbits backwards at a fix rate only when paused (manual mode)
+function manualBackward() {
+	if (!play) {
+		aa-=a;
+		bb-=b;
+		requestAnimationFrame(drawScene);
+	}
+}
+
+// increases orbits (addition)
+function increaseOrbits() {
+	orbs++;
+	rebuildTorusBuffers();
+	drawIfPaused();
+}
+
+// subtracts orbits  (subtraction)
+function subtractOrbits() {
+	if (orbs > 1) { orbs--; rebuildTorusBuffers(); drawIfPaused(); }
+}
+
+// updates the scene if it is paused so it reflects the changes
+function drawIfPaused() {
+	if (!play && !contextLost) {
+		requestAnimationFrame(drawScene);
+	}
+}
+
+// --- TERMINA BLOQUE DE FUNCIONES AUXILIARES ---
+
+// Reconstructor de contexto WebGL
+async function initWebGLResources() {
+	gl = getWebGLContext();
+	
+	if (!gl) {
+		throw new Error("WebGL no está disponible");
+	}
+	
+	initShaders();
+	initPrimitives();
+	createTorusBuffers();
+	initRendering();
+	
+	var images = await Promise.all([
+		loadImage("maps/eve_sky.png"),
+		loadImage("maps/starlight_sky.png")
+	]);
+	
+	// traza
+	console.log(
 			"Texturas cargadas:",
 			images[0].naturalWidth,
 			images[0].naturalHeight,
 			images[1].naturalWidth,
 			images[1].naturalHeight
 		);
+	
+	innerBackground = setTexture(
+		"innerTexture",
+		images[0],
+		0
+	);
+	
+	outerBackground = setTexture(
+		"outerTexture",
+		images[1],
+		1
+	);
+}
 
-		innerBackground = setTexture("innerTexture", images[0], 0);
-		outerBackground = setTexture("outerTexture", images[1], 1);
+// INICIALIZAR WEBGL
+async function initApp() {
+	initHandlers();
 
+	try {
+		await initWebGLResources();
 		requestAnimationFrame(drawScene);
-
 	} catch (error) {
-		console.error("Error cargando texturas:", error);
+		console.error("Error inicializando WebGL:", error);
 	}
 }
 
-initWebGL();
+initApp();
