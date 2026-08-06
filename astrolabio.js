@@ -677,23 +677,23 @@ function initHandlers() {
 		
 			switch (event.code)	{
 				
-				case  "KeyP": { pause(); break; }
+				case  "KeyP": { if (!event.repeat) { pause(); break; } }
 				
-				case  "KeyM": { materialSwitch(); break; }
+				case  "KeyM": { if (!event.repeat) { materialSwitch(); break; } }
 				
 				// orbit handlers (by even and odd orbits starting to count from the most outer orbit)
 				
-				case "ArrowUp": { oddOrbitUp(); break; }
-				case "Numpad8": { oddOrbitUp(); break; }
+				case "ArrowUp": { increaseOddOrbitSpeed(); break; }
+				case "Numpad8": { increaseOddOrbitSpeed(); break; }
 
-				case "ArrowDown": { oddOrbitDown(); break; }
-				case "Numpad2": { oddOrbitDown(); break; }
+				case "ArrowDown": { decreaseOddOrbitSpeed(); break; }
+				case "Numpad2": { decreaseOddOrbitSpeed(); break; }
 
-				case "ArrowRight": { evenOrbitUp(); break; }
-				case "Numpad6": { evenOrbitUp(); break; }
+				case "ArrowRight": { increaseEvenOrbitSpeed(); break; }
+				case "Numpad6": { increaseEvenOrbitSpeed(); break; }
 
-				case "ArrowLeft": { evenOrbitDown(); break; }
-				case "Numpad4": { evenOrbitDown(); break; }
+				case "ArrowLeft": { decreaseEvenOrbitSpeed(); break; }
+				case "Numpad4": { decreaseEvenOrbitSpeed(); break; }
 
 				case "Space": { manualForward(); break;	}
 				case "Numpad5": { manualForward(); break; }
@@ -705,9 +705,6 @@ function initHandlers() {
 				case "NumpadSubtract": { subtractOrbits(); break; }
 					
 			}
-				
-			//if (!play) { requestAnimationFrame(drawScene); }
-				
 		}, false);
 }
 
@@ -725,11 +722,9 @@ function pause() {
 		
 }
 
-// material switch
+// material switch (legacy)
 function materialSwitch() {
-	materialIndex = (materialIndex + 1) % materials.length;
-	mat = materials[materialIndex];
-	drawIfPaused();
+	changeMaterial(1);
 }
 
 // material navigator
@@ -740,28 +735,28 @@ function changeMaterial(direction) {
 }
 
 // odd orbits (starting from outer layers) move forward/speed up
-function oddOrbitUp() {
+function increaseOddOrbitSpeed() {
 	a+=0.1;
 	aa+=a;
 	drawIfPaused()
 }
 
 // odd orbits (starting from outer layers) move backward/speed down
-function oddOrbitDown() {
+function decreaseOddOrbitSpeed() {
 	a-=0.1;
 	aa-=a;
 	drawIfPaused()
 }
 
 // even orbits (starting from outer layers) move forward/speed up
-function evenOrbitUp() {
+function increaseEvenOrbitSpeed() {
 	b+=0.1;
 	bb+=b;
 	drawIfPaused()
 }
 
 // even orbits (starting from outer layers) move backward/speed down
-function evenOrbitDown() {
+function decreaseEvenOrbitSpeed() {
 	b-=0.1;
 	bb-=b;
 	drawIfPaused()
