@@ -654,7 +654,7 @@ function initHandlers() {
 	
 		function(event) {
 		
-			switch (event.keyCode)	{
+			switch (event.code)	{
 				
 				// iterates through shaders
 				// *LOCKED*
@@ -670,7 +670,7 @@ function initHandlers() {
 					
 					//break;
 					
-				case  80:		// turn ON/OFF movie
+				case  "KeyP":	// turn ON/OFF movie
 					
 					if (play)	{
 						
@@ -685,7 +685,7 @@ function initHandlers() {
 					
 					break;
 					
-				case  77:		// material switch
+				case  "KeyM":	// material switch
 					
 					switch (mat)	{
 						
@@ -762,24 +762,24 @@ function initHandlers() {
 					break;
 				
 				// orbit handlers (it will be mouse-wise on release)
-				case  38: { a+=0.1; aa+=a; break; }		// alfa up    (up arrow)
-				case 104: { a+=0.1; aa+=a; break; }		// alfa up    (numpad 8)
+				case "ArrowUp": { a+=0.1; aa+=a; break; }		// alfa up    (up arrow)
+				case "Numpad8": { a+=0.1; aa+=a; break; }		// alfa up    (numpad 8)
 
-				case  40: { a-=0.1; aa-=a; break; }		// alfa down  (down arrow)
-				case  98: { a-=0.1; aa-=a; break; }		// alfa down  (numpad 2)
+				case "ArrowDown": { a-=0.1; aa-=a; break; }		// alfa down  (down arrow)
+				case "Numpad2": { a-=0.1; aa-=a; break; }		// alfa down  (numpad 2)
 
-				case  39: { b+=0.1; bb+=b; break; }		// beta up    (right arrow)
-				case 102: { b+=0.1; bb+=b; break; }		// beta up    (numpad 6)
+				case "ArrowRight": { b+=0.1; bb+=b; break; }	// beta up    (right arrow)
+				case "Numpad6": { b+=0.1; bb+=b; break; }		// beta up    (numpad 6)
 
-				case  37: { b-=0.1; bb-=b; break; }		// beta down  (left arrow)
-				case 100: { b-=0.1; bb-=b; break; }		// beta down  (numpad 4)
+				case "ArrowLeft": { b-=0.1; bb-=b; break; }		// beta down  (left arrow)
+				case "Numpad4": { b-=0.1; bb-=b; break; }		// beta down  (numpad 4)
 
-				case  32: { aa+=a;  bb+=b; break;	}	// rotate forward (spacebar)
-				case 101: { aa+=a;  bb+=b; break; }		// rotate forward (numpad 5)
-				case  96: { aa-=a;  bb-=b; break; }		// rotate backward (numpad 0)
+				case "Space": { aa+=a;  bb+=b; break;	}		// rotate forward (spacebar)
+				case "Numpad5": { aa+=a;  bb+=b; break; }		// rotate forward (numpad 5)
+				case "Numpad0": { aa-=a;  bb-=b; break; }		// rotate backward (numpad 0)
 
-				case 107: { orbs++; rebuildTorusBuffers(); break; }					// increases orbits   (add)
-				case 109: if (orbs > 1)	{ orbs--; rebuildTorusBuffers(); break; }	// substracts orbits  (substract)
+				case "NumpadAdd": { orbs++; rebuildTorusBuffers(); break; }							// increases orbits   (add)
+				case "NumpadSubtract": if (orbs > 1)	{ orbs--; rebuildTorusBuffers(); break; }	// substracts orbits  (substract)
 					
 				}
 				
