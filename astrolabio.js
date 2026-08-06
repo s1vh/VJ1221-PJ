@@ -11,6 +11,7 @@ var aa	 = 0;   // odd orbit angle
 var bb	 = 0;   // pair orbit angle
 
 var play = true;
+var contextLost = false;	// prevents to request new frames if WebGL context has been lost
 
 var myphi = 0, zeta = 0, radius = 2, fovy = Math.PI/2.4;
 
@@ -452,18 +453,19 @@ function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
 }
 
-function rebuildTorusBuffers() {
+// vaciar buffers antiguos
+function deleteTorusBuffers() {
 	
-	// vaciar buffers antiguos
 	for (var i = 0; i < orbitTorusArray.length; i++) {
 		gl.deleteBuffer(orbitTorusArray[i].idBufferVertices);
 		gl.deleteBuffer(orbitTorusArray[i].idBufferIndices);
 	}
+}
+
+// reiniciar el array y reconstruir buffers
+function createTorusBuffers() {
 	
-	// reiniciar el array
 	orbitTorusArray = [];
-	
-	// reconstruir buffers
 	for (var i = 1; i <= orbs; i++) {
 		var orbitTorus = makeTorus(0.02 * i, 0.8 * i, 6, 48);
 		initBuffers(orbitTorus);
@@ -471,7 +473,14 @@ function rebuildTorusBuffers() {
 	}
 }
 
+function rebuildTorusBuffers() {
+	deleteTorusBuffers();
+	createTorusBuffers();
+}
+
 function drawScene() {
+	
+	if (contextLost) { return; }	// vuelve sin hacer nada si se ha perdido el contexto WebGL
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
@@ -552,7 +561,7 @@ function drawScene() {
 		
 	}
 	
-	if (play)	{
+	if (play && !contextLost)	{
 		
 		aa+=a; if(aa > 360) { aa = 0; }
 		bb+=b; if(bb > 360) { bb = 0; }
@@ -664,10 +673,21 @@ function initHandlers() {
 	// CONTEXT MANAGEMENT
 	canvas.addEventListener("webglcontextlost", function (event) {
 		event.preventDefault();
+		contextLost = true;
 	});
 
-	canvas.addEventListener("webglcontextrestored", function () {
-		initWebGL();
+	canvas.addEventListener("webglcontextrestored", async function () {
+		try {
+			await initWebGLResources();
+			contextLost = false;
+			requestAnimationFrame(drawScene);
+		} catch (error) {
+			contextLost = true;
+			console.error(
+				"Error restaurando WebGL:",
+				error
+			);
+		}
 	});
 	
 	// KEYBOARD EVENTS
@@ -677,9 +697,9 @@ function initHandlers() {
 		
 			switch (event.code)	{
 				
-				case  "KeyP": { if (!event.repeat) { pause(); break; } }
+				case  "KeyP": { if (!event.repeat) { pause(); } break; }
 				
-				case  "KeyM": { if (!event.repeat) { materialSwitch(); break; } }
+				case  "KeyM": { if (!event.repeat) { materialSwitch(); } break; }
 				
 				// orbit handlers (by even and odd orbits starting to count from the most outer orbit)
 				
@@ -794,50 +814,63 @@ function subtractOrbits() {
 
 // updates the scene if it is paused so it reflects the changes
 function drawIfPaused() {
-	if (!play) {
+	if (!play && !contextLost) {
 		requestAnimationFrame(drawScene);
 	}
 }
 
 // --- TERMINA BLOQUE DE FUNCIONES AUXILIARES ---
 
-// INICIALIZAR WEBGL
-async function initWebGL() {
-    gl = getWebGLContext();
-
-    if (!gl) {
-        alert("WebGL no está disponible");
-        return;
-    }
-
-    initShaders();
-    initPrimitives();
-    rebuildTorusBuffers();
-    initRendering();
-    initHandlers();
-
-	try {
-		var images = await Promise.all([
-			loadImage("maps/eve_sky.png"),
-			loadImage("maps/starlight_sky.png")
-		]);
-
-		console.log(
+// Reconstructor de contexto WebGL
+async function initWebGLResources() {
+	gl = getWebGLContext();
+	
+	if (!gl) {
+		throw new Error("WebGL no está disponible");
+	}
+	
+	initShaders();
+	initPrimitives();
+	createTorusBuffers();
+	initRendering();
+	
+	var images = await Promise.all([
+		loadImage("maps/eve_sky.png"),
+		loadImage("maps/starlight_sky.png")
+	]);
+	
+	// traza
+	console.log(
 			"Texturas cargadas:",
 			images[0].naturalWidth,
 			images[0].naturalHeight,
 			images[1].naturalWidth,
 			images[1].naturalHeight
 		);
+	
+	innerBackground = setTexture(
+		"innerTexture",
+		images[0],
+		0
+	);
+	
+	outerBackground = setTexture(
+		"outerTexture",
+		images[1],
+		1
+	);
+}
 
-		innerBackground = setTexture("innerTexture", images[0], 0);
-		outerBackground = setTexture("outerTexture", images[1], 1);
+// INICIALIZAR WEBGL
+async function initApp() {
+	initHandlers();
 
+	try {
+		await initWebGLResources();
 		requestAnimationFrame(drawScene);
-
 	} catch (error) {
-		console.error("Error cargando texturas:", error);
+		console.error("Error inicializando WebGL:", error);
 	}
 }
 
-initWebGL();
+initApp();
