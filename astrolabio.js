@@ -226,11 +226,27 @@ function getNormalMatrix(modelViewMatrix)	{
 function getProjectionMatrix()	{
 	
 	var projectionMatrix  = mat4.create();
+	var aspect = gl.canvas.width / gl.canvas.height;
 	
-	mat4.perspective(projectionMatrix, fovy, 1.0, 0.1, 100.0);
+	mat4.perspective(projectionMatrix, fovy, aspect, 0.1, 100.0);
 	
 	return projectionMatrix;
 	
+}
+
+// allows to get the correct aspect ratio after the canvas has been resized
+function resizeCanvas() {
+	var canvas = gl.canvas;
+
+	var width = canvas.clientWidth;
+	var height = canvas.clientHeight;
+
+	if (canvas.width !== width || canvas.height !== height) {
+		canvas.width = width;
+		canvas.height = height;
+	}
+
+	gl.viewport(0, 0, canvas.width, canvas.height);
 }
 
 function getCameraMatrix()	{
