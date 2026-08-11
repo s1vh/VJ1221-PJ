@@ -242,14 +242,18 @@ function resizeCanvas() {
 
 	var width = Math.round(canvas.clientWidth * dpr);
 	var height = Math.round(canvas.clientHeight * dpr);
+	
+	var resized = canvas.width !== width || canvas.height !== height;
 
-	if (canvas.width !== width || canvas.height !== height) {
+	if (resized) {
 		canvas.width = width;
 		canvas.height = height;
 		console.log("Canvas resized:", canvas.clientWidth, "x", canvas.clientHeight, "CSS →", width, "x", height, "WebGL", "aspect:", width / height);
 	}
 
 	gl.viewport(0, 0, canvas.width, canvas.height);
+	
+	return resized;
 }
 
 function getCameraMatrix()	{
@@ -606,6 +610,16 @@ function initHandlers() {
 	var lastMouseY;
 
 	var canvas = document.getElementById("myCanvas");
+	
+	// adds an event to detect when the canvas has been resized
+	var resizeObserver = new ResizeObserver(function () {
+
+		if (!play && !contextLost) {
+			requestAnimationFrame(drawScene);
+		}
+	});
+
+	resizeObserver.observe(document.getElementById("myCanvas"));
 
 	canvas.addEventListener("mousedown",
 	
