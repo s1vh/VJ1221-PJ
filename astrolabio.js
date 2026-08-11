@@ -240,12 +240,13 @@ function resizeCanvas() {
 	var canvas = gl.canvas;
 	var dpr = window.devicePixelRatio || 1;
 
-	var width = canvas.clientWidth * dpr;
-	var height = canvas.clientHeight * dpr;
+	var width = Math.round(canvas.clientWidth * dpr);
+	var height = Math.round(canvas.clientHeight * dpr);
 
 	if (canvas.width !== width || canvas.height !== height) {
 		canvas.width = width;
 		canvas.height = height;
+		console.log("Canvas resized:", canvas.clientWidth, "x", canvas.clientHeight, "CSS →", width, "x", height, "WebGL", "aspect:", width / height);
 	}
 
 	gl.viewport(0, 0, canvas.width, canvas.height);
