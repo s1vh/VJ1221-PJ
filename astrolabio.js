@@ -236,6 +236,7 @@ function getProjectionMatrix()	{
 
 // allows to get the correct aspect ratio after the canvas has been resized
 function resizeCanvas() {
+	
 	var canvas = gl.canvas;
 
 	var width = canvas.clientWidth;
@@ -498,9 +499,11 @@ function drawScene() {
 	
 	if (contextLost) { return; }	// vuelve sin hacer nada si se ha perdido el contexto WebGL
 
+	resizeCanvas();
+	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	var modelMatrix     = mat4.create();
+	var modelMatrix = mat4.create();
 	
 	//	SKY
 	gl.uniform1i(program.reflectionIndex, false);	// disables reflection at the shader
