@@ -248,7 +248,7 @@ function resizeCanvas() {
 	if (resized) {
 		canvas.width = width;
 		canvas.height = height;
-		console.log("Canvas resized:", canvas.clientWidth, "x", canvas.clientHeight, "CSS →", width, "x", height, "WebGL", "aspect:", width / height);
+		//console.log("Canvas resized:", canvas.clientWidth, "x", canvas.clientHeight, "CSS →", width, "x", height, "WebGL", "aspect:", width / height);
 	}
 
 	gl.viewport(0, 0, canvas.width, canvas.height);
@@ -619,7 +619,7 @@ function initHandlers() {
 		}
 	});
 
-	resizeObserver.observe(document.getElementById("myCanvas"));
+	resizeObserver.observe(canvas));
 
 	canvas.addEventListener("mousedown",
 	
