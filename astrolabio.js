@@ -226,11 +226,34 @@ function getNormalMatrix(modelViewMatrix)	{
 function getProjectionMatrix()	{
 	
 	var projectionMatrix  = mat4.create();
+	var aspect = gl.canvas.width / gl.canvas.height;
 	
-	mat4.perspective(projectionMatrix, fovy, 1.0, 0.1, 100.0);
+	mat4.perspective(projectionMatrix, fovy, aspect, 0.1, 100.0);
 	
 	return projectionMatrix;
 	
+}
+
+// allows to get the correct aspect ratio after the canvas has been resized
+function resizeCanvas() {
+	
+	var canvas = gl.canvas;
+	var dpr = window.devicePixelRatio || 1;
+
+	var width = Math.round(canvas.clientWidth * dpr);
+	var height = Math.round(canvas.clientHeight * dpr);
+	
+	var resized = canvas.width !== width || canvas.height !== height;
+
+	if (resized) {
+		canvas.width = width;
+		canvas.height = height;
+		//console.log("Canvas resized:", canvas.clientWidth, "x", canvas.clientHeight, "CSS →", width, "x", height, "WebGL", "aspect:", width / height);
+	}
+
+	gl.viewport(0, 0, canvas.width, canvas.height);
+	
+	return resized;
 }
 
 function getCameraMatrix()	{
@@ -482,9 +505,11 @@ function drawScene() {
 	
 	if (contextLost) { return; }	// vuelve sin hacer nada si se ha perdido el contexto WebGL
 
+	resizeCanvas();
+	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	var modelMatrix     = mat4.create();
+	var modelMatrix = mat4.create();
 	
 	//	SKY
 	gl.uniform1i(program.reflectionIndex, false);	// disables reflection at the shader
@@ -585,6 +610,16 @@ function initHandlers() {
 	var lastMouseY;
 
 	var canvas = document.getElementById("myCanvas");
+	
+	// adds an event to detect when the canvas has been resized
+	var resizeObserver = new ResizeObserver(function () {
+
+		if (!play && !contextLost) {
+			requestAnimationFrame(drawScene);
+		}
+	});
+
+	resizeObserver.observe(canvas));
 
 	canvas.addEventListener("mousedown",
 	
