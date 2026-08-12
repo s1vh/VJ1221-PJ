@@ -619,7 +619,7 @@ function initHandlers() {
 		}
 	});
 
-	resizeObserver.observe(canvas));
+	resizeObserver.observe(canvas);
 
 	canvas.addEventListener("mousedown",
 	
