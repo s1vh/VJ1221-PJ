@@ -35,7 +35,7 @@ var materials = [
 	Turquoise
 ];
 
-var materialIndex = materials.indexOf(Chrome);	// material inicial ("Chrome" en la versión legacy)
+var materialIndex = materials.indexOf(Chrome);	// starting material ("Chrome" for the legacy version)
 var mat = materials[materialIndex];
 
 var shadingMode	= 0;
@@ -43,6 +43,7 @@ var shadingMode	= 0;
 var innerBackground;
 var outerBackground;
 
+// Gets the canvas and tries the available WebGL context names in order, returning the first valid context found or null if WebGL is not available.
 function getWebGLContext() {
     
 	var canvas = document.getElementById("myCanvas");
@@ -59,6 +60,7 @@ function getWebGLContext() {
 
 }
 
+// Creates, compiles and links the active vertex and fragment shaders, binds every attribute and uniform used by the renderer, and throws a useful error if compilation or linking fails.
 function initShaders()	{ 
     
 	var vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -105,12 +107,12 @@ function initShaders()	{
 	program.modelViewMatrixIndex  = gl.getUniformLocation( program, "modelViewMatrix");
 	program.projectionMatrixIndex = gl.getUniformLocation( program, "projectionMatrix");
 	
-	// normales
+	// normals
 	program.vertexNormalAttribute = gl.getAttribLocation ( program, "VertexNormal");
 	program.normalMatrixIndex     = gl.getUniformLocation( program, "normalMatrix");
 	gl.enableVertexAttribArray(program.vertexNormalAttribute);
 	
-	// coordenadas de textura
+	// texture coords
 	program.vertexTexcoordsAttribute = gl.getAttribLocation ( program, "VertexTexcoords");
 	gl.enableVertexAttribArray(program.vertexTexcoordsAttribute);
 	
@@ -124,13 +126,13 @@ function initShaders()	{
 	program.KsIndex               = gl.getUniformLocation( program, "Material.Ks");
 	program.alphaIndex            = gl.getUniformLocation( program, "Material.alpha");
 	
-	// fuente de luz
+	// light source
 	program.LaIndex               = gl.getUniformLocation( program, "Light.La");
 	program.LdIndex               = gl.getUniformLocation( program, "Light.Ld");
 	program.LsIndex               = gl.getUniformLocation( program, "Light.Ls");
 	program.PositionIndex         = gl.getUniformLocation( program, "Light.Position");
 	
-	// COMPROBACIÓN DE SHADERS 	(me ayudará a trazar el problema para que no vuelva a quedarme con un canvas en negro durante 11 años... )
+	// check shaders (this will help me with tracing the issue in case I get stuck for another eleven years... )
 	if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
 		console.error(gl.getShaderInfoLog(vertexShader));
 		throw new Error(
@@ -157,6 +159,7 @@ function initShaders()	{
 	
 }
 
+// Sets the basic WebGL rendering state for this build: black clear color, depth testing, blending mode and the initial light values used by the active shader.
 function initRendering()	{
 	
 	gl.clearColor(0.0,0.0,0.0,1.0);
@@ -169,6 +172,7 @@ function initRendering()	{
 	
 }
 
+// Creates and uploads the vertex and index buffers for a model so its geometry can be reused by WebGL without rebuilding it every frame.
 function initBuffers(model)	{
 	
 	model.idBufferVertices = gl.createBuffer ();
@@ -181,6 +185,7 @@ function initBuffers(model)	{
 	
 }
 
+// Initializes the reusable base primitives required by this build: the shared cylinder, sphere and high-resolution torus.
 function initPrimitives()	{
 	
 	// I only need these three primitives for this build
@@ -192,25 +197,28 @@ function initPrimitives()	{
 	
 }
 
-
+// Sends the current projection matrix to the active shader program.
 function setShaderProjectionMatrix(projectionMatrix)	{
 	
 	gl.uniformMatrix4fv(program.projectionMatrixIndex, false, projectionMatrix);
 	
 }
 
+// Sends the current model-view matrix to the active shader program.
 function setShaderModelViewMatrix(modelViewMatrix)	{
 	
 	gl.uniformMatrix4fv(program.modelViewMatrixIndex, false, modelViewMatrix);
 	
 }
 
+// Sends the normal matrix to the active shader so normals remain correct after the model-view transformations.
 function setShaderNormalMatrix(normalMatrix)	{
 	
 	gl.uniformMatrix3fv(program.normalMatrixIndex, false, normalMatrix);
 	
 }
 
+// Builds the normal matrix from a model-view matrix by extracting its 3x3 part, inverting it and transposing it before returning the result.
 function getNormalMatrix(modelViewMatrix)	{
 	
 	var normalMatrix = mat3.create();
@@ -223,6 +231,7 @@ function getNormalMatrix(modelViewMatrix)	{
 	
 }
 
+// Builds the perspective projection matrix using the current field of view and the real canvas aspect ratio, so the scene keeps its proportions after a resize.
 function getProjectionMatrix()	{
 	
 	var projectionMatrix  = mat4.create();
@@ -234,7 +243,7 @@ function getProjectionMatrix()	{
 	
 }
 
-// allows to get the correct aspect ratio after the canvas has been resized
+// Keeps the WebGL drawing buffer synchronized with the canvas CSS size and the device pixel ratio, updates the viewport, and returns whether the canvas size actually changed.
 function resizeCanvas() {
 	
 	var canvas = gl.canvas;
@@ -256,6 +265,7 @@ function resizeCanvas() {
 	return resized;
 }
 
+// Builds the camera view matrix from the current spherical camera angles and radius, always looking at the center of the astrolabe.
 function getCameraMatrix()	{
 	
 	var _phi  = myphi* Math.PI / 180.0;
@@ -273,6 +283,7 @@ function getCameraMatrix()	{
 	
 }
 
+// Builds the background camera matrix using the same orientation as the main camera but a logarithmic radius, creating the zoom effect without allowing the camera to leave the sky sphere.
 function getStaticCameraMatrix()	{
 	
 	var _phi  = myphi * Math.PI / 180.0;
@@ -291,6 +302,7 @@ function getStaticCameraMatrix()	{
 	
 }
 
+// Sends the selected material ambient, diffuse, specular and shininess values to the active shader.
 function setShaderMaterial(material)	{
 	
 	gl.uniform3fv(program.KaIndex,    material.mat_ambient);
@@ -300,6 +312,7 @@ function setShaderMaterial(material)	{
 	
 }
 
+// Sends the current light color and position to the active shader. The values are still fixed here, so this function will need to preserve user-selected lighting if shader switching is restored later.
 function setShaderLight()	{	// this must be modified to allow current colors to be saved after changing shaders
 	
 	gl.uniform3f(program.LaIndex,       1.0,1.0,1.0);
@@ -309,7 +322,7 @@ function setShaderLight()	{	// this must be modified to allow current colors to 
 	
 }
 
-// CARGA LAS TEXTURAS COMO IMAGE URL
+// Loads an image from a URL and returns a Promise that resolves only when the image is ready, preventing WebGL from trying to build a texture before its source has finished loading.
 function loadImage(url) {
     return new Promise(function(resolve, reject) {
         var image = new Image();
@@ -326,7 +339,7 @@ function loadImage(url) {
     });
 }
 
-// ASIGNA LAS TEXTURAS PARA WEBGL
+// Creates a WebGL texture from an already loaded image, assigns it to the requested texture unit and shader sampler, configures filtering and wrapping, generates mipmaps and returns the texture reference.
 function setTexture(tag, image, unit) {
     var texture = gl.createTexture();
 
@@ -336,7 +349,7 @@ function setTexture(tag, image, unit) {
 	// set maps are always power of 2 so I don't need to check it here (otherwise normalize under this line)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-	// datos de la textura
+	// texture data
     gl.texImage2D(
         gl.TEXTURE_2D,
         0,
@@ -346,15 +359,14 @@ function setTexture(tag, image, unit) {
         image
     );
 
-	// parámetros de filtrado
+	// filtering parameters
     gl.texParameteri(
         gl.TEXTURE_2D,
         gl.TEXTURE_MAG_FILTER,
         gl.LINEAR
     );
 
-	// parámetros de repetición (coordenadas de textura mayores a uno)
-	
+	// repetition/mosaic parameters (for texture coords > 1)
     gl.texParameteri(
         gl.TEXTURE_2D,
         gl.TEXTURE_MIN_FILTER,
@@ -373,10 +385,10 @@ function setTexture(tag, image, unit) {
         gl.MIRRORED_REPEAT
     );
 
-	// creación del mipmap
+	// mipmap generation
     gl.generateMipmap(gl.TEXTURE_2D);
 
-	// se asigna el objeto textura a la unidad activa
+	// the texture object is assigned to the active unit
     var location = gl.getUniformLocation(
         program,
         tag
@@ -384,10 +396,11 @@ function setTexture(tag, image, unit) {
 
     gl.uniform1i(location, unit);
 
-	// devolvemos la referencia a la textura
+	// returning the texture reference
     return texture;
 }
 
+// Binds a model's vertex and index buffers, describes the packed position/normal/texture-coordinate layout to the shader and draws the indexed triangles.
 function drawSolid(model)	{
 	
 	gl.bindBuffer (gl.ARRAY_BUFFER, model.idBufferVertices);
@@ -399,7 +412,7 @@ function drawSolid(model)	{
 	
 }
 
-//  Joins model-camera-view matrixes to create perspective and orders drawing
+// Draws a regular scene model by combining its model matrix with the movable camera, calculating the normal and projection matrices, applying its material and rendering it without blending.
 function drawModel(modelMatrix, primitive, material) {
 	
 	var modelViewMatrix = mat4.create();
@@ -421,7 +434,7 @@ function drawModel(modelMatrix, primitive, material) {
 	
 }
 
-//	Draws the background while ignoring radial distance
+// Draws a sky/background model with the static camera matrix so camera rotation and zoom affect the view without making the background behave like a normal object in the scene.
 function drawBackground(modelMatrix, primitive, material) {
 	
 	var modelViewMatrix = mat4.create();
@@ -443,7 +456,7 @@ function drawBackground(modelMatrix, primitive, material) {
 	
 }
 
-//  Rotates orbits +/-45 degrees sequentially
+// Applies the chained X and Z rotations that give each nested orbit its alternating +/-45 degree orientation while propagating the odd and even orbit angles through the structure.
 function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
 	for (var i = 0; i < rotations; i=i+2) {
@@ -476,7 +489,7 @@ function rotateOrbit(modelMatrix, rotations, alfa, beta)  {
 
 }
 
-// vaciar buffers antiguos
+// Deletes the GPU vertex and index buffers currently owned by the dynamically generated orbit toruses before they are replaced.
 function deleteTorusBuffers() {
 	
 	for (var i = 0; i < orbitTorusArray.length; i++) {
@@ -485,7 +498,7 @@ function deleteTorusBuffers() {
 	}
 }
 
-// reiniciar el array y reconstruir buffers
+// Recreates the orbit torus geometry and GPU buffers for the current number of orbits, storing one torus per orbit in orbitTorusArray.
 function createTorusBuffers() {
 	
 	orbitTorusArray = [];
@@ -496,14 +509,16 @@ function createTorusBuffers() {
 	}
 }
 
+// Rebuilds the dynamic orbit buffers safely by deleting the current GPU buffers first and then creating a fresh set for the current orbit count.
 function rebuildTorusBuffers() {
 	deleteTorusBuffers();
 	createTorusBuffers();
 }
 
+// Renders one complete frame: aborts if the WebGL context is lost, keeps the canvas responsive, draws both sky layers and every astrolabe orbit/orb/handler, then advances the animation and requests the next frame only while playback is active.
 function drawScene() {
 	
-	if (contextLost) { return; }	// vuelve sin hacer nada si se ha perdido el contexto WebGL
+	if (contextLost) { return; }	// returns and does nothing if the WebGL context has been lost in the previous frame
 
 	resizeCanvas();
 	
@@ -596,13 +611,14 @@ function drawScene() {
 	
 }
 
-//  Gets Radians from a given angle in degrees
+// Helper function that converts an angle from degrees to radians for the glMatrix rotation functions.
 Math.getRadians = function(degrees) {
 
 	return degrees * Math.PI / 180;
 
 }
 
+// Registers the DOM interaction handlers once: responsive redraws while paused, mouse camera controls, WebGL context loss/restoration and the keyboard controls that call the shared interaction functions below.
 function initHandlers() {
     
 	var mouseDown = false;
@@ -736,7 +752,7 @@ function initHandlers() {
 				
 				case  "KeyM": { if (!event.repeat) { materialSwitch(); } break; }
 				
-				// orbit handlers (by even and odd orbits starting to count from the most outer orbit)
+				// orbit handlers (by even and odd orbits starting to count from the most external orbit)
 				
 				case "ArrowUp": { increaseOddOrbitSpeed(); break; }
 				case "Numpad8": { increaseOddOrbitSpeed(); break; }
@@ -763,9 +779,9 @@ function initHandlers() {
 		}, false);
 }
 
-// --- BLOQUE DE FUNCIONES AUXILIARES DE CONTROL E INTERACCIÓN ---
+// --- AUXILIARY CONTROL AND INTERACTION FUNCTION BLOCK STARTS HERE ---
 
-// turn ON/OFF movie
+// Toggles automatic animation. Pausing stops the render loop after the current frame; resuming explicitly requests a new frame so the loop starts again.
 function pause() {
 	
 	if (play) {
@@ -777,47 +793,47 @@ function pause() {
 		
 }
 
-// material switch (legacy)
+// Preserves the original (legacy) one-way material-switch control by moving to the next material through changeMaterial().
 function materialSwitch() {
 	changeMaterial(1);
 }
 
-// material navigator
+// Moves through the material list in either direction with wrap-around, updates the active material and redraws immediately when the animation is paused.
 function changeMaterial(direction) {
 	materialIndex = (materialIndex + direction + materials.length) % materials.length;
 	mat = materials[materialIndex];
 	drawIfPaused();
 }
 
-// odd orbits (starting from outer layers) move forward/speed up
+// Increases the odd-orbit angular increment and immediately advances the odd orbit angle as well, so the same control remains visible and useful in paused/manual mode.
 function increaseOddOrbitSpeed() {
 	a+=0.1;
 	aa+=a;
 	drawIfPaused()
 }
 
-// odd orbits (starting from outer layers) move backward/speed down
+// Decreases the odd-orbit angular increment and immediately moves the odd orbit angle in the corresponding direction, updating the paused scene when needed.
 function decreaseOddOrbitSpeed() {
 	a-=0.1;
 	aa-=a;
 	drawIfPaused()
 }
 
-// even orbits (starting from outer layers) move forward/speed up
+// Increases the even-orbit angular increment and immediately advances the even orbit angle as well, so the same control remains visible and useful in paused/manual mode.
 function increaseEvenOrbitSpeed() {
 	b+=0.1;
 	bb+=b;
 	drawIfPaused()
 }
 
-// even orbits (starting from outer layers) move backward/speed down
+// Decreases the even-orbit angular increment and immediately moves the even orbit angle in the corresponding direction, updating the paused scene when needed.
 function decreaseEvenOrbitSpeed() {
 	b-=0.1;
 	bb-=b;
 	drawIfPaused()
 }
 
-// moves the orbits forwards at a fix rate only when paused (manual mode)
+// Advances both orbit groups by their current angular increments only while playback is paused, providing a manual step-forward control without restarting the animation loop.
 function manualForward() {
 	if (!play) {
 		aa+=a;
@@ -826,7 +842,7 @@ function manualForward() {
 	}
 }
 
-// moves the orbits backwards at a fix rate only when paused (manual mode)
+// Moves both orbit groups backwards by their current angular increments only while playback is paused, providing the matching manual step-backward control.
 function manualBackward() {
 	if (!play) {
 		aa-=a;
@@ -835,28 +851,28 @@ function manualBackward() {
 	}
 }
 
-// increases orbits (addition)
+// Adds one orbit, rebuilds the dynamic torus buffers to match the new orbit count and redraws the scene immediately when paused.
 function increaseOrbits() {
 	orbs++;
 	rebuildTorusBuffers();
 	drawIfPaused();
 }
 
-// subtracts orbits  (subtraction)
+// Removes one orbit while keeping at least one orbit in the scene, then rebuilds the dynamic torus buffers and redraws the paused scene.
 function subtractOrbits() {
 	if (orbs > 1) { orbs--; rebuildTorusBuffers(); drawIfPaused(); }
 }
 
-// updates the scene if it is paused so it reflects the changes
+// Requests a single redraw when playback is paused and the WebGL context is valid, letting controls update the visible scene without restarting continuous animation.
 function drawIfPaused() {
 	if (!play && !contextLost) {
 		requestAnimationFrame(drawScene);
 	}
 }
 
-// --- TERMINA BLOQUE DE FUNCIONES AUXILIARES ---
+// --- AUXILIARY CONTROL AND INTERACTION FUNCTION BLOCK ENDS HERE ---
 
-// Reconstructor de contexto WebGL
+// Recreates every resource that belongs to the current WebGL context: shaders, primitive buffers, dynamic orbit buffers, rendering state and both sky textures. This is used for both first initialization and context restoration.
 async function initWebGLResources() {
 	gl = getWebGLContext();
 	
@@ -874,7 +890,7 @@ async function initWebGLResources() {
 		loadImage("maps/starlight_sky.png")
 	]);
 	
-	// traza
+	// console logs tracing
 	console.log(
 			"Texturas cargadas:",
 			images[0].naturalWidth,
@@ -896,7 +912,7 @@ async function initWebGLResources() {
 	);
 }
 
-// INICIALIZAR WEBGL
+// Initializes the application by registering the interaction handlers once, creating the WebGL resources asynchronously and requesting the first frame when initialization succeeds.
 async function initApp() {
 	initHandlers();
 
@@ -908,4 +924,4 @@ async function initApp() {
 	}
 }
 
-initApp();
+initApp();	// starts...
