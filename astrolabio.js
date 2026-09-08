@@ -793,6 +793,13 @@ function pause() {
 		
 }
 
+// Sets the camera radius used by the frontend zoom control while preserving
+// the minimum safe distance already enforced by the direct camera controls.
+function setZoom(zoomValue) {
+	radius = Math.max(1.1, zoomValue);
+	drawIfPaused();
+}
+
 // Preserves the original (legacy) one-way material-switch control by moving to the next material through changeMaterial().
 function materialSwitch() {
 	changeMaterial(1);
@@ -831,6 +838,15 @@ function decreaseEvenOrbitSpeed() {
 	b-=0.1;
 	bb-=b;
 	drawIfPaused()
+}
+
+// Sets the same absolute angular speed for both orbit families.
+// This is used by the simplified frontend while the advanced controls
+// can still modify odd and even families independently.
+function setOrbitSpeed(speedValue) {
+	a = speedValue;
+	b = speedValue;
+	drawIfPaused();
 }
 
 // Advances both orbit groups by their current angular increments only while playback is paused, providing a manual step-forward control without restarting the animation loop.
