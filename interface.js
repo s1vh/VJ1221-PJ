@@ -429,14 +429,14 @@
          * These listeners only keep the GUI synchronized and dismiss the hint
          * after a real camera drag has been discovered by the user.
          */
-        elements.canvas.addEventListener("mousedown", function (event) {
+        elements.canvas.addEventListener("pointerdown", function (event) {
             cameraDragStart = {
                 x: event.clientX,
                 y: event.clientY
             };
         });
 
-        elements.canvas.addEventListener("mousemove", function (event) {
+        elements.canvas.addEventListener("pointermove", function (event) {
             if (cameraDragStart) {
                 var dx = event.clientX - cameraDragStart.x;
                 var dy = event.clientY - cameraDragStart.y;
@@ -445,18 +445,32 @@
                     dismissCameraHint();
                 }
             }
-
             scheduleSyncFromEngine();
         });
+		
+		function endCameraPointer() {
+			cameraDragStart = null;
+			scheduleSyncFromEngine();
+		}
+		
+		elements.canvas.addEventListener(
+			"pointerup",
+			endCameraPointer
+		);
+		
+		elements.canvas.addEventListener(
+			"pointercancel",
+			endCameraPointer
+		);
 
-        window.addEventListener("mouseup", function () {
+        /*window.addEventListener("mouseup", function () {
             cameraDragStart = null;
             scheduleSyncFromEngine();
         });
 
         window.addEventListener("blur", function () {
             cameraDragStart = null;
-        });
+        });*/
     }
 
     function cacheElements() {

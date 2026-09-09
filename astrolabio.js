@@ -621,13 +621,15 @@ Math.getRadians = function(degrees) {
 // Registers the DOM interaction handlers once: responsive redraws while paused, mouse camera controls, WebGL context loss/restoration and the keyboard controls that call the shared interaction functions below.
 function initHandlers() {
     
-	var mouseDown = false;
-	var lastMouseX;
-	var lastMouseY;
-
+	//var mouseDown = false;
+	//var lastMouseX;
+	//ar lastMouseY;
 	var canvas = document.getElementById("myCanvas");
 	
-	// adds an event to detect when the canvas has been resized
+	// Adds the camera control events.
+	initPointerCameraControls(canvas);
+	
+	// Adds an event to detect when the canvas has been resized.
 	var resizeObserver = new ResizeObserver(function () {
 
 		if (!play && !contextLost) {
@@ -637,7 +639,7 @@ function initHandlers() {
 
 	resizeObserver.observe(canvas);
 
-	canvas.addEventListener("mousedown",
+	/*canvas.addEventListener("mousedown",
 	
 			function(event) {
 				
@@ -647,9 +649,9 @@ function initHandlers() {
 				
 			},
 			
-			false);
+			false);*/
 
-	canvas.addEventListener("mouseup",
+	/*canvas.addEventListener("mouseup",
 	
 			function() {
 				
@@ -657,9 +659,9 @@ function initHandlers() {
 				
 			},
 			
-			false);
+			false);*/
 
-	canvas.addEventListener("mousemove",
+	/*canvas.addEventListener("mousemove",
 	
 			function (event) {
 			
@@ -719,7 +721,7 @@ function initHandlers() {
 			
 		},
 		
-		false);
+		false);*/
 	
 	// CONTEXT MANAGEMENT
 	canvas.addEventListener("webglcontextlost", function (event) {
@@ -798,6 +800,53 @@ function pause() {
 function setZoom(zoomValue) {
 	radius = Math.max(1.1, zoomValue);
 	drawIfPaused();
+}
+
+// Rotates the camera around the astrolabe using pointer movement deltas.
+function rotateCamera(deltaX, deltaY) {
+	
+	myphi	-= deltaX;
+	zeta	+= deltaY;
+	
+	if (zeta < -80) {
+		zeta = -80;
+	}
+	
+	else if (zeta > 80) {
+		zeta = 80;
+	}
+	
+	drawIfPaused();
+}
+
+// Changes the camera distance while preserving the minimum safe radius.
+function changeCameraRadius(deltaY) {
+	setZoom(radius - deltaY / 10.0);
+}
+
+// Changes the field of view for the advanced desktop camera control.
+function changeCameraFovy(deltaY) {
+	
+	fovy -= deltaY / 100.0;
+	
+	if (fovy < 1) {
+		fovy = 1;
+	}
+	
+	else if (fovy > 3.13) {
+		fovy = 3.13;	// less than PI for preventing numerical precision issues
+	}
+	
+	drawIfPaused();
+}
+
+// Returns the screen-space distance between two active pointers.
+function getPointerDistance(pointerA, pointerB) {
+	
+	var deltaX = pointerB.x - pointerA.x;
+	var deltaY = pointerB.y - pointerA.y;
+	
+	return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 }
 
 // Preserves the original (legacy) one-way material-switch control by moving to the next material through changeMaterial().
@@ -928,8 +977,177 @@ async function initWebGLResources() {
 	);
 }
 
+// Registers unified mouse, touch and pen camera controls using Pointer Events.
+function initPointerCameraControls(canvas) {
+
+	var activePointers = new Map();
+	var lastSinglePointer = null;
+	var pinchStartDistance = null;
+	var pinchStartRadius = null;
+
+	function getPointerPosition(event) {
+
+		return {
+			x: event.clientX,
+			y: event.clientY
+		};
+	}
+
+	function beginPinch() {
+
+		if (activePointers.size !== 2) {
+			return;
+		}
+
+		var pointers = Array.from(activePointers.values());
+
+		pinchStartDistance = getPointerDistance(pointers[0], pointers[1]);
+		pinchStartRadius = radius;
+	}
+
+	function resetToSinglePointer() {
+
+		if (activePointers.size !== 1) {
+			lastSinglePointer = null;
+			return;
+		}
+
+		var remainingPointer =
+			Array.from(activePointers.values())[0];
+
+		lastSinglePointer = {
+			x: remainingPointer.x,
+			y: remainingPointer.y
+		};
+	}
+
+	canvas.addEventListener("pointerdown", function(event) {
+
+		// Only the primary mouse button controls the camera.
+		if (event.pointerType === "mouse" && event.button !== 0) {
+			return;
+		}
+
+		// Two simultaneous pointers are enough for the supported gestures.
+		else if (activePointers.size >= 2) {
+			return;
+		}
+
+		canvas.setPointerCapture(event.pointerId);
+
+		activePointers.set(
+			event.pointerId,
+			getPointerPosition(event)
+		);
+
+		if (activePointers.size === 1) {
+
+			lastSinglePointer =
+				getPointerPosition(event);
+
+		} else if (activePointers.size === 2) {
+
+			lastSinglePointer = null;
+			beginPinch();
+		}
+	});
+
+	canvas.addEventListener("pointermove", function(event) {
+
+		if (!activePointers.has(event.pointerId)) {
+			return;
+		}
+
+		var currentPointer =
+			getPointerPosition(event);
+
+		activePointers.set(
+			event.pointerId,
+			currentPointer
+		);
+
+		// ONE POINTER ---------------------------------------
+		if (activePointers.size === 1) {
+
+			if (!lastSinglePointer) {
+				lastSinglePointer = currentPointer;
+				return;
+			}
+
+			var deltaX = currentPointer.x - lastSinglePointer.x;
+			var deltaY = currentPointer.y - lastSinglePointer.y;
+
+			// Advanced desktop controls remain available.
+			if (event.pointerType === "mouse" && event.shiftKey) {
+
+				if (event.altKey) {
+					changeCameraFovy(deltaY);
+				} else {
+					changeCameraRadius(deltaY);
+				}
+			} else {
+				rotateCamera(deltaX, deltaY);
+			}
+
+			lastSinglePointer = currentPointer;
+			return;
+		}
+
+		// TWO POINTERS --------------------------------------
+		if (activePointers.size === 2) {
+
+			var pointers = Array.from(activePointers.values());
+			var currentDistance = getPointerDistance(pointers[0],pointers[1]);
+
+			if (pinchStartDistance && currentDistance > 0) {
+				/*
+				 * Fingers moving apart:
+				 * currentDistance increases
+				 * radius decreases
+				 * camera zooms in.
+				 *
+				 * Fingers moving together do the opposite.
+				 */
+				var newRadius = pinchStartRadius * (pinchStartDistance / currentDistance);
+				setZoom(newRadius);
+			}
+		}
+	});
+
+	function finishPointer(event) {
+
+		if (!activePointers.has(event.pointerId)) {
+			return;
+		}
+
+		activePointers.delete(event.pointerId);
+
+		if (canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
+			canvas.releasePointerCapture(event.pointerId);
+		}
+
+		pinchStartDistance = null;
+		pinchStartRadius = null;
+		/*
+		 * This is important when transitioning from
+		 * two fingers back to one: the remaining finger
+		 * becomes the new origin instead of producing a jump.
+		 */
+		if (activePointers.size === 1) {
+			resetToSinglePointer();
+		} else {
+			lastSinglePointer = null;
+		}
+	}
+
+	// Add event listeners for pointer finishing.
+	canvas.addEventListener("pointerup", finishPointer);
+	canvas.addEventListener("pointercancel", finishPointer);
+}
+
 // Initializes the application by registering the interaction handlers once, creating the WebGL resources asynchronously and requesting the first frame when initialization succeeds.
 async function initApp() {
+	
 	initHandlers();
 
 	try {
