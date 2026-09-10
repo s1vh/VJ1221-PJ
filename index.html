@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#06070b">
+    <meta name="description" content="Interactive WebGL armillary sphere demo.">
+    <title>Esfera Armillar</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <main class="app-shell">
+        <canvas id="myCanvas" aria-label="Interactive WebGL armillary sphere"></canvas>
+
+        <header class="scene-header" aria-live="polite">
+            <div class="title-block">
+                <h1 data-i18n="title">Armillary Sphere</h1>
+                <p id="cameraHint" class="camera-hint" data-i18n="cameraHint">Drag to rotate</p>
+            </div>
+
+            <button id="languageToggle"
+                    class="pill-button language-toggle"
+                    type="button"
+                    aria-label="Cambiar idioma / Change language">
+                ES
+            </button>
+        </header>
+
+        <section class="control-dock glass-panel" aria-label="Armillary sphere controls">
+            <div class="control-group material-control">
+                <span class="control-label" data-i18n="material">Material</span>
+                <div class="stepper material-stepper">
+                    <button id="materialPrevious"
+                            class="icon-button"
+                            type="button"
+                            aria-label="Previous material">‹</button>
+                    <output id="materialName" class="material-name">Chrome</output>
+                    <button id="materialNext"
+                            class="icon-button"
+                            type="button"
+                            aria-label="Next material">›</button>
+                </div>
+            </div>
+
+            <div class="control-group slider-control">
+                <div class="label-row">
+                    <label for="zoomSlider" class="control-label" data-i18n="zoom">Zoom</label>
+                    <output id="zoomValue" class="value-output">60</output>
+                </div>
+                <input id="zoomSlider"
+                       class="glass-slider"
+                       type="range"
+                       min="0"
+                       max="100"
+                       step="1"
+                       value="60"
+                       aria-label="Zoom">
+            </div>
+
+            <div class="control-group slider-control">
+                <div class="label-row">
+                    <label for="speedSlider" class="control-label" data-i18n="rotation">Rotation</label>
+                    <output id="speedValue" class="value-output">+1.0</output>
+                </div>
+                <input id="speedSlider"
+                       class="glass-slider centered-slider"
+                       type="range"
+                       min="-100"
+                       max="100"
+                       step="1"
+                       value="0"
+                       aria-label="Orbit rotation speed">
+            </div>
+
+            <div class="control-group orbit-control">
+                <span class="control-label" data-i18n="orbits">Orbits</span>
+                <div class="stepper compact-stepper">
+                    <button id="orbitRemove"
+                            class="icon-button"
+                            type="button"
+                            aria-label="Remove orbit">−</button>
+                    <output id="orbitCount" class="orbit-count">4</output>
+                    <button id="orbitAdd"
+                            class="icon-button"
+                            type="button"
+                            aria-label="Add orbit">+</button>
+                </div>
+            </div>
+
+            <button id="playPause"
+                    class="pill-button primary-action"
+                    type="button"
+                    aria-pressed="false">
+                <span id="playPauseIcon" aria-hidden="true">Ⅱ</span>
+                <span id="playPauseText" data-i18n="pause">Pause</span>
+            </button>
+        </section>
+
+        <div id="statusMessage" class="sr-only" aria-live="polite"></div>
+    </main>
+
+    <!-- Legacy shader sources kept inline for compatibility with astrolabio.js. -->
+<script id="GouraudVertexShader" type="x-shader/x-vertex">
+		
+		uniform   mat4 projectionMatrix;
+		uniform   mat4 modelViewMatrix;
+		uniform   mat3 normalMatrix;
+		
+		attribute vec3 VertexPosition;
+		attribute vec3 VertexNormal;
+		
+		varying   vec3 colorOut;
+		
+		struct LightData {
+		
+			vec3 Position; // Posición en coordenadas del ojo
+			vec3 La;       // Ambiente
+			vec3 Ld;       // Difusa
+			vec3 Ls;       // Especular
+			
+		};
+		
+		uniform LightData Light;
+		
+		struct MaterialData {
+		
+			vec3 Ka;       // Ambiente
+			vec3 Kd;       // Difusa
+			vec3 Ks;       // Especular
+			float alpha;   // Brillo
+			
+		};
+		
+		uniform MaterialData Material;
+		
+		vec3 phong (vec3 N, vec3 L, vec3 V) {
+		
+			vec3  ambient  = Material.Ka * Light.La;
+			vec3  diffuse  = vec3(0.0);
+			vec3  specular = vec3(0.0);
+			
+			float NdotL    = dot (N,L);
+        
+			if (NdotL > 0.0) {
+			
+				vec3  R       = reflect(-L, N);;
+				float RdotV_n = pow(max(0.0, dot(R,V)), Material.alpha);
+				
+				diffuse  = NdotL   * (Light.Ld * Material.Kd);
+				specular = RdotV_n * (Light.Ls * Material.Ks);
+				
+			}
+			
+			return (ambient + diffuse + specular);
+			
+		}
+      
+		void main()  {
+			
+			vec3 N          = normalize(normalMatrix * VertexNormal);
+			vec4 ecPosition = modelViewMatrix * vec4(VertexPosition,1.0);
+			vec3 ec         = vec3(ecPosition);
+			vec3 L          = normalize(Light.Position - ec);
+			vec3 V          = normalize(-ec);
+			
+			colorOut        = phong(N,L,V);
+			
+			gl_Position     = projectionMatrix * ecPosition;
+			
+		}
+		
+    </script>
+
+<script id="PhongVertexShader" type="x-shader/x-vertex">
+		
+		uniform   mat4 projectionMatrix;
+		uniform   mat4 modelViewMatrix;
+		uniform   mat3 normalMatrix;
+		
+		attribute vec3 VertexPosition;
+		attribute vec3 VertexNormal;
+		
+		varying vec3 N, ec;
+		
+		void main()	{
+			
+			N  = normalize(normalMatrix * VertexNormal);
+			vec4 ecPosition= modelViewMatrix * vec4(VertexPosition,1.0);
+			ec = vec3(ecPosition);
+			
+			gl_Position = projectionMatrix * ecPosition;
+			
+		}
+		
+	</script>
+
+<script id="reflectionVertexShader" type="x-shader/x-vertex">
+        
+        uniform   mat4 projectionMatrix;
+        uniform   mat4 modelViewMatrix;
+        uniform   mat3 normalMatrix;
+		
+		uniform   bool reflection;
+        
+        attribute vec3 VertexPosition;
+        attribute vec3 VertexNormal;
+        attribute vec2 VertexTexcoords;
+        
+        varying   vec3 R, N, ec;
+        varying   vec2 texCoords;
+        
+        void main()  {
+			
+			N  = normalize(normalMatrix * VertexNormal);
+			vec4 ecPosition = modelViewMatrix * vec4(VertexPosition, 1.0);
+			ec = vec3(ecPosition);
+			
+			gl_Position = projectionMatrix * ecPosition;
+		  
+			if (reflection)	{
+				
+				R = normalize(ec * N);
+				texCoords   = vec2(R[0], R[1]);
+				
+			} else	{
+				
+				texCoords   = VertexTexcoords;
+				
+			}
+          
+        }
+      
+    </script>
+
+<script id="GouraudFragmentShader" type="x-shader/x-fragment">
+      
+		precision mediump float;
+      
+		varying vec3 colorOut;
+
+		void main() {
+			
+			gl_FragColor = vec4(colorOut, 1);
+		
+		}
+		
+    </script>
+
+<script id="PhongFragmentShader" type="x-shader/x-fragment">
+		
+		precision mediump float;
+		
+		struct LightData	{
+		
+			vec3 Position; // Posición en coordenadas del ojo
+			vec3 La;       // Ambiente
+			vec3 Ld;       // Difusa
+			vec3 Ls;       // Especular
+			
+		};
+		
+		uniform LightData Light;
+		
+		struct MaterialData	{
+		
+			vec3 Ka;       // Ambiente
+			vec3 Kd;       // Difusa
+			vec3 Ks;       // Especular
+			float alpha;   // Brillo
+			
+		};
+		
+		uniform MaterialData Material;
+		
+		varying vec3 N, ec;
+		
+		vec3 phong (vec3 N, vec3 L, vec3 V)	{
+		
+			vec3  ambient  = Material.Ka * Light.La;
+			vec3  diffuse  = vec3(0.0);
+			vec3  specular = vec3(0.0);
+			
+			float NdotL    = dot (N, L);
+			
+			if (NdotL > 0.0)	{
+			
+				vec3  R       = reflect(-L, N);
+				float RdotV_n = pow(max(0.0, dot(R,V)), Material.alpha);
+				
+				diffuse  = NdotL   * (Light.Ld * Material.Kd);
+				specular = RdotV_n * (Light.Ls * Material.Ks);
+				
+			}
+			
+			return (ambient + diffuse + specular);	
+		}
+		
+		void main()	{
+			
+			vec3 n = normalize(N);
+			vec3 L = normalize(Light.Position - ec);
+			vec3 V = normalize(-ec);
+			
+			gl_FragColor = vec4(phong(n,L,V), 1.0);
+			
+		}
+		
+	</script>
+
+<script id="reflectionFragmentShader" type="x-shader/x-fragment">
+        
+        precision mediump float;
+        struct LightData {
+			
+			vec3 Position; // Posición en coordenadas del ojo
+			vec3 La;       // Ambiente
+			vec3 Ld;       // Difusa
+			vec3 Ls;       // Especular
+			
+        };
+		
+        uniform LightData Light;
+      
+        struct MaterialData {
+			
+			vec3 Ka;       // Ambiente
+			vec3 Kd;       // Difusa
+			vec3 Ks;       // Especular
+			float alpha;   // Brillo
+			
+        };
+		
+        uniform MaterialData Material;
+		uniform sampler2D innerTexture;
+		uniform sampler2D outerTexture;
+		uniform int 	  depth;
+        
+        varying vec3 N, ec;
+        varying vec2 texCoords;
+		
+        vec3 phong (vec3 N, vec3 L, vec3 V) {
+			
+			vec3  ambient  = Material.Ka * Light.La;
+			vec3  diffuse  = vec3(0.0);
+			vec3  specular = vec3(0.0);
+			
+			float NdotL    = dot (N,L);
+			
+			if (NdotL > 0.0) {
+			
+				vec3  R       = reflect(-L, N);
+				float RdotV_n = pow(max(0.0, dot(R, V)), Material.alpha);
+			
+				diffuse  = NdotL   * (Light.Ld * Material.Kd);
+				specular = RdotV_n * (Light.Ls * Material.Ks);
+				
+			}
+			
+			return (ambient + diffuse + specular);
+			
+        }
+		
+        void main() {
+			
+			vec3 n = normalize(N);
+			vec3 L = normalize(Light.Position - ec);
+			vec3 V = normalize(-ec);
+			
+			if(depth == 0)	{
+				
+				gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 2.0) * 4.0;
+				//gl_FragColor = (texture2D(innerTexture, texCoords) + texture2D(outerTexture, texCoords)) * vec4(phong(n,L,V), 1.0) * 1.8;
+				
+			}
+			
+			if(depth == 1)	{
+			
+				gl_FragColor = texture2D(innerTexture, texCoords) * vec4(phong(n,L,V), 1.8) * 2.4;
+				
+			}
+			
+			if(depth == 2)	{
+			
+				//gl_FragColor = texture2D(outerTexture, texCoords) * vec4(phong(n,L,V), 0.9) * 1.8;
+				gl_FragColor = texture2D(outerTexture, texCoords);
+				
+			}
+			
+        }
+      
+	</script>
+
+    <script src="gl-matrix-min.js"></script>
+    <script src="materiales.js"></script>
+    <script src="primitivas.js"></script>
+    <script src="astrolabio.js"></script>
+    <script src="interface.js"></script>
+</body>
+</html>

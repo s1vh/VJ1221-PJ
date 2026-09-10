@@ -1,0 +1,451 @@
+/* -------------------------------------------------------------------------
+   VJ1221-PJ preliminary UI
+   The canvas remains the protagonist; the interface only floats above it.
+   ------------------------------------------------------------------------- */
+
+:root {
+    color-scheme: dark;
+    --safe-top: max(18px, env(safe-area-inset-top));
+    --safe-right: max(18px, env(safe-area-inset-right));
+    --safe-bottom: max(18px, env(safe-area-inset-bottom));
+    --safe-left: max(18px, env(safe-area-inset-left));
+
+    --glass-bg: rgba(18, 21, 29, 0.44);
+    --glass-bg-strong: rgba(22, 26, 36, 0.62);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-highlight: rgba(255, 255, 255, 0.10);
+    --text-main: rgba(255, 255, 255, 0.94);
+    --text-soft: rgba(255, 255, 255, 0.62);
+    --text-faint: rgba(255, 255, 255, 0.38);
+    --control-bg: rgba(255, 255, 255, 0.08);
+    --control-hover: rgba(255, 255, 255, 0.14);
+    --control-active: rgba(255, 255, 255, 0.20);
+    --focus-ring: rgba(255, 255, 255, 0.72);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #05060a;
+}
+
+body {
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    color: var(--text-main);
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.app-shell {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #05060a;
+}
+
+#myCanvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    outline: none;
+    touch-action: none;
+    cursor: grab;
+}
+
+#myCanvas:active {
+    cursor: grabbing;
+}
+
+/* The decorative/header layer does not steal canvas interaction. */
+.scene-header {
+    position: absolute;
+    z-index: 10;
+    top: var(--safe-top);
+    left: var(--safe-left);
+    right: var(--safe-right);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    pointer-events: none;
+}
+
+.title-block {
+    min-width: 0;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.48);
+}
+
+.title-block h1 {
+    margin: 0;
+    font-size: clamp(1rem, 1.8vw, 1.35rem);
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+.camera-hint {
+    margin: 4px 0 0;
+    color: var(--text-faint);
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 600ms ease,
+        transform 600ms ease;
+}
+
+.camera-hint.is-dismissed {
+    opacity: 0;
+    transform: translateY(-3px);
+    pointer-events: none;
+}
+
+.language-toggle {
+    pointer-events: auto;
+    min-width: 48px;
+}
+
+/* -------------------------------------------------------------------------
+   Glass controls
+   ------------------------------------------------------------------------- */
+
+.glass-panel {
+    background:
+        linear-gradient(180deg, var(--glass-highlight), transparent 40%),
+        var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(18px) saturate(125%);
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+
+.control-dock {
+    position: absolute;
+    z-index: 12;
+    left: 50%;
+    bottom: var(--safe-bottom);
+    width: min(1120px, calc(100vw - var(--safe-left) - var(--safe-right)));
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns:
+        minmax(160px, 1.05fr)
+        minmax(150px, 1fr)
+        minmax(170px, 1.2fr)
+        minmax(120px, 0.72fr)
+        auto;
+    gap: 18px;
+    align-items: center;
+    padding: 13px 14px;
+    border-radius: 26px;
+}
+
+.control-group {
+    min-width: 0;
+}
+
+.control-label,
+.value-output {
+    font-size: 0.69rem;
+    font-weight: 600;
+    letter-spacing: 0.075em;
+    text-transform: uppercase;
+}
+
+.control-label {
+    color: var(--text-soft);
+}
+
+.value-output {
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 7px;
+}
+
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 7px;
+}
+
+.material-stepper {
+    display: grid;
+    grid-template-columns: 34px minmax(88px, 1fr) 34px;
+}
+
+.compact-stepper {
+    justify-content: flex-start;
+}
+
+.material-name,
+.orbit-count {
+    min-width: 0;
+    color: var(--text-main);
+    font-size: 0.84rem;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+}
+
+.orbit-count {
+    min-width: 28px;
+}
+
+/* -------------------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------------------- */
+
+.pill-button,
+.icon-button {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    color: var(--text-main);
+    background: var(--control-bg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        transform 160ms ease;
+}
+
+.pill-button:hover,
+.icon-button:hover {
+    background: var(--control-hover);
+    border-color: rgba(255, 255, 255, 0.19);
+}
+
+.pill-button:active,
+.icon-button:active {
+    background: var(--control-active);
+    transform: scale(0.97);
+}
+
+.pill-button:focus-visible,
+.icon-button:focus-visible,
+.glass-slider:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+
+.pill-button {
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.icon-button {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 999px;
+    display: inline-grid;
+    place-items: center;
+    font-size: 1.22rem;
+    line-height: 1;
+}
+
+.primary-action {
+    min-width: 104px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--glass-bg-strong);
+}
+
+#playPauseIcon {
+    width: 1em;
+    text-align: center;
+    font-size: 0.78rem;
+}
+
+/* -------------------------------------------------------------------------
+   Range controls
+   ------------------------------------------------------------------------- */
+
+.glass-slider {
+    width: 100%;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    accent-color: rgba(255, 255, 255, 0.86);
+}
+
+.glass-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.glass-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.glass-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    margin-top: -5.5px;
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.90);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.32);
+}
+
+.glass-slider::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.90);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.32);
+}
+
+/* Gives the centered speed control a very subtle zero reference line. */
+.centered-slider {
+    background:
+        linear-gradient(
+            to right,
+            transparent calc(50% - 0.5px),
+            rgba(255, 255, 255, 0.20) calc(50% - 0.5px),
+            rgba(255, 255, 255, 0.20) calc(50% + 0.5px),
+            transparent calc(50% + 0.5px)
+        );
+}
+
+/* -------------------------------------------------------------------------
+   Responsive layout
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+    .control-dock {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 13px 16px;
+        width: min(620px, calc(100vw - var(--safe-left) - var(--safe-right)));
+        border-radius: 24px;
+    }
+
+    .primary-action {
+        width: 100%;
+    }
+}
+
+@media (max-width: 560px) {
+    :root {
+        --safe-top: max(12px, env(safe-area-inset-top));
+        --safe-right: max(12px, env(safe-area-inset-right));
+        --safe-bottom: max(12px, env(safe-area-inset-bottom));
+        --safe-left: max(12px, env(safe-area-inset-left));
+    }
+
+    .title-block h1 {
+        font-size: 1rem;
+    }
+
+    .control-dock {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        padding: 12px;
+        gap: 12px;
+        border-radius: 22px;
+    }
+
+    .material-control,
+    .primary-action {
+        grid-column: 1 / -1;
+    }
+
+    .orbit-control .stepper {
+        justify-content: center;
+    }
+
+    .orbit-control > .control-label {
+        display: block;
+        text-align: center;
+    }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .scene-header {
+        top: 10px;
+    }
+
+    .control-dock {
+        bottom: 10px;
+        grid-template-columns:
+            minmax(150px, 1fr)
+            minmax(135px, 1fr)
+            minmax(150px, 1.1fr)
+            minmax(110px, 0.7fr)
+            auto;
+        padding: 9px 10px;
+        gap: 10px;
+        border-radius: 22px;
+    }
+
+    .camera-hint {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+        animation-duration: 0.001ms !important;
+    }
+}
+
+/* Screen-reader only utility. */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
