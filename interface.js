@@ -47,7 +47,7 @@
             mixed: "Mixed"
         },
         es: {
-            title: "Esfera Armillar",
+            title: "Esfera Armilar",
             cameraHint: "Arrastra para rotar",
             material: "Material",
             zoom: "Zoom",
