@@ -3,6 +3,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import os
 import webbrowser
+import sys
 
 
 HOST = "localhost"
@@ -27,9 +28,18 @@ class Handler(SimpleHTTPRequestHandler):
         if self.verbose:
             super().log_message(format, *args)
 
+class HelpArgumentParser(ArgumentParser):
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(
+            2,
+            f"{self.prog}: error: {message}\n"
+            "Use /? for help.\n"
+        )
 
 def parse_arguments():
-    parser = ArgumentParser(
+    parser = HelpArgumentParser(
         prog="localServer.py",
         add_help=False,
         prefix_chars="/",
